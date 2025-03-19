@@ -6,7 +6,7 @@ const {
   userTableAdd,
   userTableGetOne,
   userTableDelete,
-} = require("../routes/userTable");
+} = require("../controllers/userTable");
 router.post("/add", userTableAdd);
 router.get("/getAll", userTableGetAll);
 router.get("/get/id", userTableGetOne);
