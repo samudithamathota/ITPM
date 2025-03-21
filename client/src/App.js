@@ -4,8 +4,11 @@ import TimetableConstraints from "./components/constraints"; // Correct import p
 import Data from "./components/data"; // Correct import path
 import FileDeletion from "./components/delete"; // Correct import path
 import Generate from "./components/generate"; // Correct import path
-import Login from "./components/index"; // Correct import path (ensure the correct file name)
+import Signup from "./components/index"; // Correct import path (ensure the correct file name)
 import ManageData from "./components/manageData"; // Correct import path
+import Login from "./components/signUp";
+import TimeTables from "./components/timeTables";
+
 import "./App.css"; // Make sure this file exists and is correctly styled
 
 function App() {
@@ -17,7 +20,8 @@ function App() {
         <Route path="/delete" element={<FileDeletion />} />
         <Route path="/generate" element={<Generate />} />
         <Route path="/index" element={<Login />} />{" "}
-        {/* Ensure the Login path is correct */}
+        <Route path="/signUp" element={<Signup />} />
+        <Route path="/timeTables" element={<TimeTables />} />{" "}
         <Route path="/manageData" element={<ManageData />} />
       </Routes>
     </Router>
