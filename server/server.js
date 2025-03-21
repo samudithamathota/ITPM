@@ -53,6 +53,9 @@ app.use("/createNew", createNew);
 const queryAll = require("./routes/queryAll.js");
 app.use("/queryAll", queryAll);
 
+const queryOne = require("./routes/queryOne.js");
+app.use("/queryOne", queryOne);
+
 const updateRow = require("./routes/updateRow.js");
 app.use("/updateRow", updateRow);
 
