@@ -337,7 +337,7 @@ const TimetableGenerationPortal = ({
             >
               Generation Settings
             </button>
-            <button
+            {/* <button
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === "constraints"
                   ? "border-red-500 text-red-600"
@@ -346,7 +346,7 @@ const TimetableGenerationPortal = ({
               onClick={() => setActiveTab("constraints")}
             >
               Constraints
-            </button>
+            </button> */}
             <button
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === "results"

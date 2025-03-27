@@ -14,7 +14,8 @@ interface TimeRange {
 }
 
 const TimeAllocationPortal = () => {
-  const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+  const weekDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+  const weekendDays = ["Saturday", "Sunday"];
   const timeSlots = [
     "8:00 AM",
     "9:00 AM",
@@ -26,30 +27,55 @@ const TimeAllocationPortal = () => {
     "3:00 PM",
     "4:00 PM",
     "5:00 PM",
+    "6:00 PM",
+    "7:00 PM",
+    "8:00 PM",
+    "9.00 PM",
+    "10.00 PM",
   ];
 
-  // Initialize schedule with all slots available
-  const initialSchedule: Schedule = days.reduce(
-    (acc: Schedule, day: string) => {
-      acc[day] = timeSlots.reduce(
-        (slotAcc: { [key: string]: boolean }, slot: string) => {
-          slotAcc[slot] = true;
-          return slotAcc;
-        },
-        {}
-      );
-      return acc;
-    },
-    {} as Schedule
-  );
-
-  const [schedule, setSchedule] = useState<Schedule>(initialSchedule);
+  const [isWeekday, setIsWeekday] = useState<boolean>(true);
+  const [days, setDays] = useState<string[]>(weekDays);
+  const [schedule, setSchedule] = useState<Schedule>({});
   const [selectedDay, setSelectedDay] = useState<string>("Monday");
   const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRange>({
     start: "8:00 AM",
     end: "9:00 AM",
     available: true,
   });
+
+  // Initialize schedule based on current days (weekdays or weekends)
+  const initializeSchedule = (daysArray: string[]) => {
+    const newSchedule: Schedule = daysArray.reduce(
+      (acc: Schedule, day: string) => {
+        acc[day] = timeSlots.reduce(
+          (slotAcc: { [key: string]: boolean }, slot: string) => {
+            slotAcc[slot] = true;
+            return slotAcc;
+          },
+          {}
+        );
+        return acc;
+      },
+      {} as Schedule
+    );
+    setSchedule(newSchedule);
+    if (!daysArray.includes(selectedDay)) {
+      setSelectedDay(daysArray[0]);
+    }
+  };
+
+  // Initialize schedule on first render
+  useState(() => {
+    initializeSchedule(days);
+  });
+
+  const handleWeekdayToggle = (isWeekdaySelected: boolean) => {
+    setIsWeekday(isWeekdaySelected);
+    const newDays = isWeekdaySelected ? weekDays : weekendDays;
+    setDays(newDays);
+    initializeSchedule(newDays);
+  };
 
   const handleSlotToggle = (day: string, slot: string) => {
     setSchedule({
@@ -113,6 +139,28 @@ const TimeAllocationPortal = () => {
           Time Range Settings
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="mt-4">
+            <label className="inline-flex items-center">
+              <input
+                type="radio"
+                className="form-radio text-purple-600"
+                name="week"
+                checked={isWeekday}
+                onChange={() => handleWeekdayToggle(true)}
+              />
+              <span className="ml-2 text-gray-700">WeekDay</span>
+            </label>
+            <label className="inline-flex items-center ml-6">
+              <input
+                type="radio"
+                className="form-radio text-purple-600"
+                name="week"
+                checked={!isWeekday}
+                onChange={() => handleWeekdayToggle(false)}
+              />
+              <span className="ml-2 text-gray-700">Weekend</span>
+            </label>
+          </div>
           <div>
             <label
               htmlFor="day"
@@ -277,12 +325,12 @@ const TimeAllocationPortal = () => {
                         <button
                           onClick={() => handleSlotToggle(day, slot)}
                           className={`w-6 h-6 rounded-full ${
-                            schedule[day][slot]
+                            schedule[day]?.[slot]
                               ? "bg-green-500 hover:bg-green-600"
                               : "bg-red-500 hover:bg-red-600"
                           } focus:outline-none`}
                         >
-                          {schedule[day][slot] ? "✓" : "✕"}
+                          {schedule[day]?.[slot] ? "✓" : "✕"}
                         </button>
                       </div>
                     </td>
