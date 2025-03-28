@@ -1,91 +1,97 @@
-import { useState } from "react";
-import { AppProvider } from "./context/AppContext";
+import { useEffect, useState } from "react";
 import Layout from "./components/LayOut";
 import TeacherPortal from "./components/TeacherPortal";
 import LecturePortal from "./components/LecturePortal";
 import TimeAllocationPortal from "./components/TimeAllocationPortal";
 import FileInputPortal from "./components/FileInputPortal";
 import TimetableGenerationPortal from "./components/TimeTableGenerationPortal";
+import Dashboard from "./components/Dashboard";
+import RoomPortal from "./components/RoomPortal";
+import StudentPortal from "./components/StudentPortal";
+
 export function App() {
   const [activePage, setActivePage] = useState("dashboard");
-  const renderPage = () => {
-    switch (activePage) {
+
+  useEffect(() => {
+    return () => {
+      localStorage.removeItem("showAddTeacherForm");
+      localStorage.removeItem("showAddLectureForm");
+      localStorage.removeItem("startTimetableGeneration");
+      localStorage.removeItem("showAddRoomForm");
+      localStorage.removeItem("showAddStudentForm");
+    };
+  }, []);
+
+  const renderContent = () => {
+    // Map between Layout menu IDs and your existing page names
+    const pageMap: Record<string, string> = {
+      dashboard: "dashboard",
+      teachers: "teachers",
+      lectures: "lectures",
+      rooms: "rooms",
+      students: "students",
+      timeAllocation: "time-allocation",
+      fileInput: "file-input",
+      timetableGeneration: "timetable",
+    };
+
+    const actualPage =
+      Object.entries(pageMap).find(
+        ([layoutId]) => layoutId === activePage
+      )?.[1] || "dashboard";
+
+    switch (actualPage) {
+      case "dashboard":
+        return <Dashboard setCurrentPage={setActivePage} />;
       case "teachers":
-        return <TeacherPortal />;
-      case "lectures":
-        return <LecturePortal />;
-      case "timeAllocation":
-        return <TimeAllocationPortal />;
-      case "fileInput":
-        return <FileInputPortal />;
-      case "timetableGeneration":
-        return <TimetableGenerationPortal />;
-      default:
         return (
-          <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-            <h1 className="text-3xl font-bold text-blue-600 mb-4">
-              Welcome to AcademiSync
-            </h1>
-            <p className="text-lg text-gray-600 max-w-2xl mb-8">
-              Your comprehensive timetable management solution for educational
-              institutions. Navigate through the sidebar to access different
-              features.
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[
-                {
-                  title: "Teachers",
-                  icon: "👨‍🏫",
-                  page: "teachers",
-                  description: "Add and manage teaching staff",
-                },
-                {
-                  title: "Lectures",
-                  icon: "📚",
-                  page: "lectures",
-                  description: "Create and organize lectures",
-                },
-                {
-                  title: "Time Allocation",
-                  icon: "⏰",
-                  page: "timeAllocation",
-                  description: "Set available time slots",
-                },
-                {
-                  title: "File Input",
-                  icon: "📁",
-                  page: "fileInput",
-                  description: "Import data from files",
-                },
-                {
-                  title: "Timetable Generation",
-                  icon: "📅",
-                  page: "timetableGeneration",
-                  description: "Generate and export timetables",
-                },
-              ].map((item) => (
-                <div
-                  key={item.page}
-                  className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer border border-gray-200"
-                  onClick={() => setActivePage(item.page)}
-                >
-                  <div className="text-4xl mb-3">{item.icon}</div>
-                  <h2 className="text-xl font-semibold text-blue-600 mb-2">
-                    {item.title}
-                  </h2>
-                  <p className="text-gray-600">{item.description}</p>
-                </div>
-              ))}
-            </div>
-          </div>
+          <TeacherPortal
+            autoOpenForm={localStorage.getItem("showAddTeacherForm") === "true"}
+            onMount={() => localStorage.removeItem("showAddTeacherForm")}
+          />
         );
+      case "lectures":
+        return (
+          <LecturePortal
+            autoOpenForm={localStorage.getItem("showAddLectureForm") === "true"}
+            onMount={() => localStorage.removeItem("showAddLectureForm")}
+          />
+        );
+      case "rooms":
+        return (
+          <RoomPortal
+            autoOpenForm={localStorage.getItem("showAddRoomForm") === "true"}
+            onMount={() => localStorage.removeItem("showAddRoomForm")}
+          />
+        );
+      case "students":
+        return (
+          <StudentPortal
+            autoOpenForm={localStorage.getItem("showAddStudentForm") === "true"}
+            onMount={() => localStorage.removeItem("showAddStudentForm")}
+          />
+        );
+      case "time-allocation":
+        return <TimeAllocationPortal />;
+      case "file-input":
+        return <FileInputPortal />;
+      case "timetable":
+        return (
+          <TimetableGenerationPortal
+            autoStartGeneration={
+              localStorage.getItem("startTimetableGeneration") === "true"
+            }
+            onMount={() => localStorage.removeItem("startTimetableGeneration")}
+          />
+        );
+      default:
+        return <Dashboard setCurrentPage={setActivePage} />;
     }
   };
+
   return (
-    <AppProvider>
-      <Layout activePage={activePage} setActivePage={setActivePage}>
-        {renderPage()}
-      </Layout>
-    </AppProvider>
+    <Layout activePage={activePage} setActivePage={setActivePage}>
+      {renderContent()}
+    </Layout>
   );
 }

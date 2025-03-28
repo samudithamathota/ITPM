@@ -358,8 +358,8 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({
     const fetchTeachers = async () => {
       try {
         setIsLoading(true);
-        // const data = await TeacherAPI.getTeachers();
-        // setTeachers(data);
+        const data = await API.getTeachers();
+        setTeachers(data);
 
         // Mock data for demonstration
       } catch (err) {
@@ -392,19 +392,19 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({
       };
 
       if (editingTeacher) {
-        // const updatedTeacher = await TeacherAPI.updateTeacher(teacherData);
-        // setTeachers(teachers.map(t => t.id === updatedTeacher.id ? updatedTeacher : t));
+        const updatedTeacher = await API.updateTeacher(teacherData);
+        setTeachers(
+          teachers.map((t) => (t.id === updatedTeacher.id ? updatedTeacher : t))
+        );
 
-        // Mock update for demonstration
         setTeachers(
           teachers.map((t) => (t.id === teacherData.id ? teacherData : t))
         );
       } else {
-        // const { id: _, ...apiData } = teacherData;
-        // const savedTeacher = await TeacherAPI.addTeacher(apiData);
-        // setTeachers([...teachers, savedTeacher]);
+        const { id: _, ...apiData } = teacherData;
+        const savedTeacher = await API.addTeacher(apiData);
+        setTeachers([...teachers, savedTeacher]);
 
-        // Mock add for demonstration
         setTeachers([...teachers, teacherData]);
       }
 
@@ -440,10 +440,9 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({
 
     try {
       setIsLoading(true);
-      // await TeacherAPI.deleteTeacher(id);
-      // setTeachers(teachers.filter(teacher => teacher.id !== id));
+      await API.deleteTeacher(id);
+      setTeachers(teachers.filter((teacher) => teacher.id !== id));
 
-      // Mock delete for demonstration
       setTeachers(teachers.filter((teacher) => teacher.id !== id));
     } catch (err) {
       setError("Failed to delete teacher. Please try again.");

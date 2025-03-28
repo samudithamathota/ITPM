@@ -2,6 +2,7 @@ import { useState, createContext, useContext, ReactNode } from "react";
 
 type Teacher = { id: string; name: string };
 type Lecture = { id: string; name: string; teacherId?: string };
+type Room = { id: string; name: string };
 type TimeAllocation = {
   id: string;
   day: string;
@@ -19,6 +20,11 @@ interface AppContextType {
   addLecture: (lecture: Omit<Lecture, "id">) => void;
   updateLecture: (lecture: Lecture) => void;
   deleteLecture: (id: string) => void;
+
+  rooms: Room[];
+  addRoom: (room: Omit<Room, "id">) => void;
+  updateRoom: (room: Room) => void;
+  deleteRoom: (id: string) => void;
 
   timeAllocations: TimeAllocation[];
   addTimeAllocation: (allocation: Omit<TimeAllocation, "id">) => void;
@@ -59,6 +65,18 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
   const deleteLecture = (id: string) => {
     setLectures(lectures.filter((l) => l.id !== id));
+  };
+
+  // Room state
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const addRoom = (room: Omit<Room, "id">) => {
+    setRooms([...rooms, { ...room, id: Date.now().toString() }]);
+  };
+  const updateRoom = (updatedRoom: Room) => {
+    setRooms(rooms.map((r) => (r.id === updatedRoom.id ? updatedRoom : r)));
+  };
+  const deleteRoom = (id: string) => {
+    setRooms(rooms.filter((r) => r.id !== id));
   };
 
   // Time allocations state
@@ -138,6 +156,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         addLecture,
         updateLecture,
         deleteLecture,
+        rooms,
+        addRoom,
+        updateRoom,
+        deleteRoom,
         timeAllocations,
         addTimeAllocation,
         updateTimeAllocation,

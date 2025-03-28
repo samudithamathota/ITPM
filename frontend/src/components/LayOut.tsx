@@ -6,6 +6,8 @@ import {
   ClockIcon,
   FileIcon,
   CalendarIcon,
+  Building,
+  Smile,
 } from "lucide-react";
 
 interface LayoutProps {
@@ -34,6 +36,16 @@ const Layout: React.FC<LayoutProps> = ({
       id: "lectures",
       label: "Lectures",
       icon: <BookOpenIcon size={20} />,
+    },
+    {
+      id: "rooms",
+      label: "Room Allocation",
+      icon: <Building size={20} />,
+    },
+    {
+      id: "students",
+      label: "Students",
+      icon: <Smile size={20} />,
     },
     {
       id: "timeAllocation",
