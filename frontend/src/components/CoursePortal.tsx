@@ -38,7 +38,17 @@ const LecturePortal = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
+  const [errors, setErrors] = useState<{
+    name: string;
+    code: string;
+    department: string;
+    location: string;
+  }>({
+    name: "",
+    code: "",
+    department: "",
+    location: "",
+  });
   const [newLecture, setNewLecture] = useState({
     name: "",
     code: "",
@@ -130,7 +140,7 @@ const LecturePortal = ({
       setError(
         editingLecture
           ? "Failed to update lecture. Please try again."
-          : "Failed to add lecture. Please try again."
+          : "Failed to Add course. Please try again."
       );
     } finally {
       setIsLoading(false);
@@ -199,6 +209,46 @@ const LecturePortal = ({
     );
   }
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target; // Get the id and value
+
+    const normalizedValue = value.replace(/\s+/g, " ");
+    let newErrors = { ...errors };
+
+    if (id === "name") {
+      if (/^[A-Za-z\s]*$/.test(normalizedValue)) {
+        setNewLecture({ ...newLecture, name: normalizedValue });
+        newErrors.name = "";
+      } else {
+        newErrors.name = "Only letters and spaces are allowed for Course Name!";
+      }
+    } else if (id === "code") {
+      if (/^[A-Za-z0-9]+$/.test(value)) {
+        setNewLecture({ ...newLecture, code: value });
+        setError("");
+      } else {
+        newErrors.code =
+          "Only letters and numbers are allowed for Course Code!";
+      }
+    } else if (id === "department") {
+      if (/^[A-Za-z\s]*$/.test(value)) {
+        setNewLecture({ ...newLecture, department: value });
+        setError("");
+      } else {
+        newErrors.department = "Only letters are allowed for Department!";
+      }
+    } else if (id === "location") {
+      if (/^[A-Za-z0-9]+$/.test(value)) {
+        setNewLecture({ ...newLecture, location: value });
+        setError("");
+      } else {
+        newErrors.location =
+          "Only letters and numbers are allowed for Location!";
+      }
+    }
+    setErrors(newErrors);
+  };
+
   return (
     <div className="w-full">
       {/* Error Message */}
@@ -212,10 +262,10 @@ const LecturePortal = ({
       <div className="mb-8 flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-800">
-            Lecture Management
+            Course Management
           </h1>
           <p className="mt-1 text-gray-600">
-            Add and manage lectures for timetable generation
+            Add and manage courses for timetable generation
           </p>
         </div>
         <button
@@ -227,7 +277,7 @@ const LecturePortal = ({
           disabled={isLoading}
         >
           <PlusIcon size={18} className="mr-2" />
-          {showAddForm ? "Cancel" : "Add Lecture"}
+          {showAddForm ? "Cancel" : "Add Course"}
         </button>
       </div>
 
@@ -235,7 +285,7 @@ const LecturePortal = ({
       {showAddForm && (
         <div className="bg-white p-6 rounded-lg shadow mb-8">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">
-            {editingLecture ? "Edit Lecture" : "Add New Lecture"}
+            {editingLecture ? "Edit course" : "Add New course"}
           </h2>
           <form onSubmit={handleAddLecture}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -244,18 +294,19 @@ const LecturePortal = ({
                   htmlFor="name"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
-                  Lecture Name
+                  Course Name
                 </label>
                 <input
                   type="text"
                   id="name"
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                   value={newLecture.name}
-                  onChange={(e) =>
-                    setNewLecture({ ...newLecture, name: e.target.value })
-                  }
+                  onChange={handleInputChange}
                   required
                 />
+                {errors && (
+                  <p className="text-red-500 text-sm mt-1">{errors.name}</p>
+                )}
               </div>
               <div>
                 <label
@@ -269,11 +320,12 @@ const LecturePortal = ({
                   id="code"
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                   value={newLecture.code}
-                  onChange={(e) =>
-                    setNewLecture({ ...newLecture, code: e.target.value })
-                  }
+                  onChange={handleInputChange}
                   required
                 />
+                {errors && (
+                  <p className="text-red-500 text-sm mt-1">{errors.code}</p>
+                )}
               </div>
               <div>
                 <label
@@ -287,11 +339,14 @@ const LecturePortal = ({
                   id="department"
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                   value={newLecture.department}
-                  onChange={(e) =>
-                    setNewLecture({ ...newLecture, department: e.target.value })
-                  }
+                  onChange={handleInputChange}
                   required
                 />
+                {errors && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.department}
+                  </p>
+                )}
               </div>
               <div>
                 <label
@@ -359,12 +414,15 @@ const LecturePortal = ({
                   id="location"
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                   value={newLecture.location}
-                  onChange={(e) =>
-                    setNewLecture({ ...newLecture, location: e.target.value })
-                  }
+                  onChange={handleInputChange}
                   placeholder="e.g., Room 101"
                   required
                 />
+                {errors && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.department}
+                  </p>
+                )}
               </div>
               <div>
                 <label
@@ -377,7 +435,7 @@ const LecturePortal = ({
                   type="number"
                   id="transitionTime"
                   min="5"
-                  max="30"
+                  max="15"
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                   value={newLecture.transitionTime}
                   onChange={(e) =>
@@ -428,7 +486,7 @@ const LecturePortal = ({
                 {isLoading && (
                   <Loader2Icon className="animate-spin mr-2" size={18} />
                 )}
-                {editingLecture ? "Update Lecture" : "Save Lecture"}
+                {editingLecture ? "Update Course" : "Save Course"}
               </button>
             </div>
           </form>
@@ -438,7 +496,7 @@ const LecturePortal = ({
       {/* Lecture List */}
       <div className="bg-white p-6 rounded-lg shadow">
         <div className="mb-6 flex justify-between items-center">
-          <h2 className="text-xl font-semibold text-gray-800">Lecture List</h2>
+          <h2 className="text-xl font-semibold text-gray-800">Courses List</h2>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <SearchIcon size={18} className="text-gray-400" />
@@ -459,7 +517,7 @@ const LecturePortal = ({
             <p className="text-gray-500">
               {searchTerm
                 ? "No lectures match your search."
-                : "No lectures added yet. Click 'Add Lecture' to get started."}
+                : "No lectures added yet. Click 'Add Course' to get started."}
             </p>
           </div>
         ) : (

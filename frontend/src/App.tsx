@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import Layout from "./components/LayOut";
 import TeacherPortal from "./components/TeacherPortal";
-import LecturePortal from "./components/LecturePortal";
+import LecturePortal from "./components/CoursePortal";
 import TimeAllocationPortal from "./components/TimeAllocationPortal";
 import FileInputPortal from "./components/FileInputPortal";
 import TimetableGenerationPortal from "./components/TimeTableGenerationPortal";
