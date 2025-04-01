@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PlusIcon, SaveIcon } from "lucide-react";
 
 interface Schedule {
@@ -13,38 +13,104 @@ interface TimeRange {
   available: boolean;
 }
 
+interface TimeAllocationPayload {
+  weekdays: {
+    [day: string]: {
+      availableSlots: string[];
+      unavailableSlots: string[];
+    };
+  };
+  weekends: {
+    [day: string]: {
+      availableSlots: string[];
+      unavailableSlots: string[];
+    };
+  };
+  settings: {
+    slotDuration: number;
+    weekdayStartTime: string;
+    weekdayEndTime: string;
+    weekendStartTime: string;
+    weekendEndTime: string;
+  };
+}
+
 const TimeAllocationPortal = () => {
   const weekDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
   const weekendDays = ["Saturday", "Sunday"];
-  const timeSlots = [
-    "8:00 AM",
-    "9:00 AM",
-    "10:00 AM",
-    "11:00 AM",
-    "12:00 PM",
-    "1:00 PM",
-    "2:00 PM",
-    "3:00 PM",
-    "4:00 PM",
-    "5:00 PM",
-    "6:00 PM",
-    "7:00 PM",
-    "8:00 PM",
-    "9.00 PM",
-    "10.00 PM",
+
+  const durationOptions = [
+    { value: 30, label: "30 minutes" },
+    { value: 45, label: "45 minutes" },
+    { value: 60, label: "1 hour" },
+    { value: 90, label: "1.5 hours" },
+    { value: 120, label: "2 hours" },
+    { value: 150, label: "2.5 hours" },
+    { value: 180, label: "3 hours" },
   ];
 
+  // State
   const [isWeekday, setIsWeekday] = useState<boolean>(true);
   const [days, setDays] = useState<string[]>(weekDays);
   const [schedule, setSchedule] = useState<Schedule>({});
   const [selectedDay, setSelectedDay] = useState<string>("Monday");
   const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRange>({
-    start: "8:00 AM",
-    end: "9:00 AM",
+    start: "08:00",
+    end: "22:00",
     available: true,
   });
+  const [duration, setDuration] = useState<number>(60);
+  const [timeSlots, setTimeSlots] = useState<string[]>([]);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [saveMessage, setSaveMessage] = useState<{
+    text: string;
+    type: "success" | "error";
+  } | null>(null);
 
-  // Initialize schedule based on current days (weekdays or weekends)
+  // Utility functions
+  const timeToMinutes = (time: string): number => {
+    const [hours, minutes] = time.split(":").map(Number);
+    return hours * 60 + minutes;
+  };
+
+  const minutesToTime = (minutes: number): string => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours.toString().padStart(2, "0")}:${mins
+      .toString()
+      .padStart(2, "0")}`;
+  };
+
+  const generateTimeSlots = (
+    start: string,
+    end: string,
+    duration: number
+  ): string[] => {
+    const slots: string[] = [];
+    let currentTime = timeToMinutes(start);
+    const endTime = timeToMinutes(end);
+
+    while (currentTime + duration <= endTime) {
+      const slotStart = minutesToTime(currentTime);
+      const slotEnd = minutesToTime(currentTime + duration);
+      slots.push(`${slotStart} - ${slotEnd}`);
+      currentTime += duration;
+    }
+
+    return slots;
+  };
+
+  // Initialize time slots
+  useEffect(() => {
+    const slots = generateTimeSlots(
+      selectedTimeRange.start,
+      selectedTimeRange.end,
+      duration
+    );
+    setTimeSlots(slots);
+  }, [selectedTimeRange.start, selectedTimeRange.end, duration]);
+
+  // Initialize schedule
   const initializeSchedule = (daysArray: string[]) => {
     const newSchedule: Schedule = daysArray.reduce(
       (acc: Schedule, day: string) => {
@@ -59,22 +125,34 @@ const TimeAllocationPortal = () => {
       },
       {} as Schedule
     );
+
     setSchedule(newSchedule);
     if (!daysArray.includes(selectedDay)) {
       setSelectedDay(daysArray[0]);
     }
   };
 
-  // Initialize schedule on first render
-  useState(() => {
-    initializeSchedule(days);
-  });
+  useEffect(() => {
+    if (timeSlots.length > 0) {
+      initializeSchedule(days);
+    }
+  }, [days, timeSlots]);
 
+  // Event handlers
   const handleWeekdayToggle = (isWeekdaySelected: boolean) => {
     setIsWeekday(isWeekdaySelected);
     const newDays = isWeekdaySelected ? weekDays : weekendDays;
     setDays(newDays);
-    initializeSchedule(newDays);
+    setSelectedDay(newDays[0]);
+
+    const newSchedule: Schedule = {};
+    newDays.forEach((day) => {
+      newSchedule[day] = {};
+      timeSlots.forEach((slot) => {
+        newSchedule[day][slot] = true;
+      });
+    });
+    setSchedule(newSchedule);
   };
 
   const handleSlotToggle = (day: string, slot: string) => {
@@ -88,18 +166,15 @@ const TimeAllocationPortal = () => {
   };
 
   const handleApplyTimeRange = () => {
-    const startIndex = timeSlots.indexOf(selectedTimeRange.start);
-    const endIndex = timeSlots.indexOf(selectedTimeRange.end);
-    if (startIndex > -1 && endIndex > -1 && startIndex <= endIndex) {
-      const updatedSchedule: Schedule = {
-        ...schedule,
-      };
-      for (let i = startIndex; i <= endIndex; i++) {
-        updatedSchedule[selectedDay][timeSlots[i]] =
-          selectedTimeRange.available;
-      }
-      setSchedule(updatedSchedule);
-    }
+    const updatedSchedule: Schedule = {
+      ...schedule,
+    };
+
+    timeSlots.forEach((slot) => {
+      updatedSchedule[selectedDay][slot] = selectedTimeRange.available;
+    });
+
+    setSchedule(updatedSchedule);
   };
 
   const handleClearAll = () => {
@@ -126,6 +201,99 @@ const TimeAllocationPortal = () => {
     setSchedule(availableSchedule);
   };
 
+  // Save handler with proper message handling
+  // Modify the handleSaveSchedule function like this:
+  const handleSaveSchedule = async () => {
+    setIsSaving(true);
+    setSaveMessage(null);
+
+    try {
+      // Base payload with settings
+      const payload: any = {
+        settings: {
+          slotDuration: duration,
+          weekdayStartTime: selectedTimeRange.start,
+          weekdayEndTime: selectedTimeRange.end,
+          weekendStartTime: selectedTimeRange.start,
+          weekendEndTime: selectedTimeRange.end,
+        },
+      };
+
+      if (isWeekday) {
+        // Only include weekdays data
+        payload.weekdays = {};
+        weekDays.forEach((day) => {
+          if (schedule[day]) {
+            payload.weekdays[day] = {
+              availableSlots: Object.entries(schedule[day])
+                .filter(([_, isAvailable]) => isAvailable)
+                .map(([slot]) => slot),
+              unavailableSlots: Object.entries(schedule[day])
+                .filter(([_, isAvailable]) => !isAvailable)
+                .map(([slot]) => slot),
+            };
+          } else {
+            payload.weekdays[day] = {
+              availableSlots: [],
+              unavailableSlots: [],
+            };
+          }
+        });
+        // Don't include weekends at all
+      } else {
+        // Only include weekends data
+        payload.weekends = {};
+        weekendDays.forEach((day) => {
+          if (schedule[day]) {
+            payload.weekends[day] = {
+              availableSlots: Object.entries(schedule[day])
+                .filter(([_, isAvailable]) => isAvailable)
+                .map(([slot]) => slot),
+              unavailableSlots: Object.entries(schedule[day])
+                .filter(([_, isAvailable]) => !isAvailable)
+                .map(([slot]) => slot),
+            };
+          } else {
+            payload.weekends[day] = {
+              availableSlots: [],
+              unavailableSlots: [],
+            };
+          }
+        });
+        // Don't include weekdays at all
+      }
+
+      console.log("Data to be sent to backend:", payload);
+
+      const response = await fetch("/api/save-schedule", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        setSaveMessage({
+          text: "Schedule saved successfully!",
+          type: "success",
+        });
+      } else {
+        setSaveMessage({
+          text: "Failed to save schedule",
+          type: "error",
+        });
+      }
+    } catch (error) {
+      console.error("Error saving schedule:", error);
+      setSaveMessage({
+        text: "Error saving schedule",
+        type: "error",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
   return (
     <div className="w-full">
       <div className="mb-8">
@@ -134,6 +302,20 @@ const TimeAllocationPortal = () => {
           Configure available time slots for timetable generation
         </p>
       </div>
+
+      {/* Status message display */}
+      {saveMessage && (
+        <div
+          className={`mb-4 p-4 rounded-md ${
+            saveMessage.type === "success"
+              ? "bg-green-100 text-green-800"
+              : "bg-red-100 text-red-800"
+          }`}
+        >
+          {saveMessage.text}
+        </div>
+      )}
+
       <div className="bg-white p-6 rounded-lg shadow mb-8">
         <h2 className="text-xl font-semibold text-gray-800 mb-4">
           Time Range Settings
@@ -161,6 +343,27 @@ const TimeAllocationPortal = () => {
               <span className="ml-2 text-gray-700">Weekend</span>
             </label>
           </div>
+
+          <div>
+            <label
+              htmlFor="duration"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Time Slot Duration
+            </label>
+            <select
+              id="duration"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              value={duration}
+              onChange={(e) => setDuration(Number(e.target.value))}
+            >
+              {durationOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
           <div>
             <label
               htmlFor="day"
@@ -186,9 +389,10 @@ const TimeAllocationPortal = () => {
               htmlFor="startTime"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Start Time
+              Schedule Start Time
             </label>
-            <select
+            <input
+              type="time"
               id="startTime"
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
               value={selectedTimeRange.start}
@@ -198,22 +402,17 @@ const TimeAllocationPortal = () => {
                   start: e.target.value,
                 })
               }
-            >
-              {timeSlots.map((time) => (
-                <option key={time} value={time}>
-                  {time}
-                </option>
-              ))}
-            </select>
+            />
           </div>
           <div>
             <label
               htmlFor="endTime"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              End Time
+              Schedule End Time
             </label>
-            <select
+            <input
+              type="time"
               id="endTime"
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
               value={selectedTimeRange.end}
@@ -223,13 +422,7 @@ const TimeAllocationPortal = () => {
                   end: e.target.value,
                 })
               }
-            >
-              {timeSlots.map((time) => (
-                <option key={time} value={time}>
-                  {time}
-                </option>
-              ))}
-            </select>
+            />
           </div>
         </div>
         <div className="mt-4">
@@ -341,8 +534,15 @@ const TimeAllocationPortal = () => {
           </table>
         </div>
         <div className="mt-6 flex justify-end">
-          <button className="px-4 py-2 bg-purple-600 text-white rounded-md flex items-center hover:bg-purple-700 transition-colors">
-            <SaveIcon size={18} className="mr-2" /> Save Schedule
+          <button
+            onClick={handleSaveSchedule}
+            disabled={isSaving}
+            className={`px-4 py-2 bg-purple-600 text-white rounded-md flex items-center hover:bg-purple-700 transition-colors ${
+              isSaving ? "opacity-70 cursor-not-allowed" : ""
+            }`}
+          >
+            <SaveIcon size={18} className="mr-2" />
+            {isSaving ? "Saving..." : "Save Schedule"}
           </button>
         </div>
       </div>
