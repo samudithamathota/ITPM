@@ -1,58 +1,80 @@
-import { Router, Request, Response } from "express";
-import Time from "../models/TimeAllocation";
+import express, { Request, Response } from "express";
+import { TimeAllocationModel } from "../models/TimeAllocation";
 
-const router = Router();
+const router = express.Router();
 
-// Get all times
+// Create or update time allocation
+router.post("/", async (req: Request, res: Response) => {
+  try {
+    const { id, weekdays, weekends, settings } = req.body;
+    const year = Number(id.year); // Ensure year is a number
+
+    const existingAllocation = await TimeAllocationModel.findOne({
+      "id.year": year,
+    });
+
+    if (existingAllocation) {
+      const updated = await TimeAllocationModel.findOneAndUpdate(
+        { "id.year": year },
+        { weekdays, weekends, settings },
+        { new: true }
+      );
+      return res.status(200).json(updated);
+    } else {
+      const newAllocation = new TimeAllocationModel({
+        id,
+        weekdays,
+        weekends,
+        settings,
+      });
+      await newAllocation.save();
+      return res.status(201).json(newAllocation);
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Get time allocation by year
+router.get("/:year", async (req: Request, res: Response) => {
+  try {
+    const year = Number(req.params.year); // Ensure year is a number
+    const allocation = await TimeAllocationModel.findOne({
+      "id.year": year,
+    }).lean();
+
+    if (!allocation) {
+      return res.status(404).json({ message: "Time allocation not found" });
+    }
+
+    return res.status(200).json(allocation);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Get all time allocations
 router.get("/", async (req: Request, res: Response) => {
   try {
-    const times = await Time.find();
-    res.json(times);
-  } catch (err: unknown) {
-    res.status(500).json({
-      message: (err as Error).message,
-    });
+    const allocations = await TimeAllocationModel.find().lean();
+    return res.status(200).json(allocations);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error" });
   }
 });
 
-// Create a time
-router.post("/", async (req: Request, res: Response) => {
-  const time = new Time(req.body);
+// Delete time allocation
+router.delete("/:year", async (req: Request, res: Response) => {
   try {
-    const newTime = await time.save();
-    res.status(201).json(newTime);
-  } catch (err: unknown) {
-    res.status(400).json({
-      message: (err as Error).message,
-    });
-  }
-});
-
-// Update a time
-router.put("/:id", async (req: Request, res: Response) => {
-  try {
-    const time = await Time.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
-    res.json(time);
-  } catch (err: unknown) {
-    res.status(400).json({
-      message: (err as Error).message,
-    });
-  }
-});
-
-// Delete a time
-router.delete("/:id", async (req: Request, res: Response) => {
-  try {
-    await Time.findByIdAndDelete(req.params.id);
-    res.json({
-      message: "Time deleted",
-    });
-  } catch (err: unknown) {
-    res.status(500).json({
-      message: (err as Error).message,
-    });
+    const year = Number(req.params.year); // Ensure year is a number
+    await TimeAllocationModel.findOneAndDelete({ "id.year": year });
+    return res.status(200).json({ message: "Time allocation deleted" });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error" });
   }
 });
 

@@ -1,55 +1,62 @@
-import mongoose, { Schema, Document } from "mongoose";
+// models/TimeAllocation.model.ts
+import { Schema, model, Document } from "mongoose";
 
-// Define the interface for TypeScript type safety
-interface ITimeAllocation extends Document {
-  day: string;
-  timeSlot: string;
-  lectureId: mongoose.Schema.Types.ObjectId;
-  roomNumber: string;
-  building?: string;
-  isRecurring: boolean;
-  sessionType: "lecture" | "tutorial" | "revision";
+interface DaySlots {
+  availableSlots: string[];
+  unavailableSlots: string[];
 }
 
-const timeAllocationSchema = new Schema<ITimeAllocation>(
-  {
-    day: {
-      type: String,
-      required: true,
-    },
-    timeSlot: {
-      type: String,
-      required: true,
-    },
-    lectureId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Lecture",
-      required: true,
-    },
-    roomNumber: {
-      type: String,
-      required: true,
-    },
-    building: {
-      type: String,
-    },
-    isRecurring: {
-      type: Boolean,
-      default: false,
-    },
-    sessionType: {
-      type: String,
-      enum: ["lecture", "tutorial", "revision"],
-      default: "lecture",
-    },
-  },
-  {
-    timestamps: true,
-  }
-);
+interface TimeAllocationSettings {
+  slotDuration: number;
+  weekdayStartTime: string;
+  weekdayEndTime: string;
+  weekendStartTime: string;
+  weekendEndTime: string;
+}
 
-const TimeAllocation = mongoose.model<ITimeAllocation>(
+interface TimeAllocationDocument extends Document {
+  id: {
+    year: number;
+  };
+  weekdays?: {
+    [day: string]: DaySlots;
+  };
+  weekends?: {
+    [day: string]: DaySlots;
+  };
+  settings: TimeAllocationSettings;
+}
+
+const TimeAllocationSchema = new Schema<TimeAllocationDocument>({
+  id: {
+    year: { type: Number, required: true }, // Changed from String to Number
+  },
+  weekdays: {
+    type: Map,
+    of: new Schema({
+      availableSlots: [String],
+      unavailableSlots: [String],
+    }),
+    required: false,
+  },
+  weekends: {
+    type: Map,
+    of: new Schema({
+      availableSlots: [String],
+      unavailableSlots: [String],
+    }),
+    required: false,
+  },
+  settings: {
+    slotDuration: { type: Number, required: true },
+    weekdayStartTime: { type: String, required: true },
+    weekdayEndTime: { type: String, required: true },
+    weekendStartTime: { type: String, required: true },
+    weekendEndTime: { type: String, required: true },
+  },
+});
+
+export const TimeAllocationModel = model<TimeAllocationDocument>(
   "TimeAllocation",
-  timeAllocationSchema
+  TimeAllocationSchema
 );
-export default TimeAllocation;

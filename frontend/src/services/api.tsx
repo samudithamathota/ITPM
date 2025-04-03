@@ -45,6 +45,31 @@ interface Room {
   isAccessible: boolean;
 }
 
+interface TimeAllocationPayload {
+  id: {
+    year: string;
+  };
+  weekdays?: {
+    [day: string]: {
+      availableSlots: string[];
+      unavailableSlots: string[];
+    };
+  };
+  weekends?: {
+    [day: string]: {
+      availableSlots: string[];
+      unavailableSlots: string[];
+    };
+  };
+  settings: {
+    slotDuration: number;
+    weekdayStartTime: string;
+    weekdayEndTime: string;
+    weekendStartTime: string;
+    weekendEndTime: string;
+  };
+}
+
 const API_BASE =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
 
@@ -230,5 +255,47 @@ export const API = {
       },
     });
     if (!response.ok) throw new Error("Failed to delete room");
+  },
+
+  // Time Allocation
+
+  async getTimeAllocation(year: string): Promise<TimeAllocationPayload> {
+    const response = await fetch(`${API_BASE}/time-allocation?year=${year}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
+    if (!response.ok) throw new Error("Failed to fetch time allocation");
+    return await response.json();
+  },
+
+  async saveTimeAllocation(
+    payload: TimeAllocationPayload
+  ): Promise<TimeAllocationPayload> {
+    const response = await fetch(`${API_BASE}/time-allocation`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error("Failed to save time allocation");
+    return await response.json();
+  },
+
+  async updateTimeAllocation(
+    payload: TimeAllocationPayload
+  ): Promise<TimeAllocationPayload> {
+    const response = await fetch(`${API_BASE}/time-allocation`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error("Failed to update time allocation");
+    return await response.json();
   },
 };

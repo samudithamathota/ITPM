@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { PlusIcon, SaveIcon } from "lucide-react";
+import { API } from "../services/api";
 
 interface Schedule {
   [day: string]: {
@@ -14,13 +15,16 @@ interface TimeRange {
 }
 
 interface TimeAllocationPayload {
-  weekdays: {
+  id: {
+    year: string;
+  };
+  weekdays?: {
     [day: string]: {
       availableSlots: string[];
       unavailableSlots: string[];
     };
   };
-  weekends: {
+  weekends?: {
     [day: string]: {
       availableSlots: string[];
       unavailableSlots: string[];
@@ -49,6 +53,13 @@ const TimeAllocationPortal = () => {
     { value: 180, label: "3 hours" },
   ];
 
+  const yearOptions = [
+    { value: "1st Year", label: "1st Year" },
+    { value: "2nd Year", label: "2nd Year" },
+    { value: "3rd Year", label: "3rd Year" },
+    { value: "4th Year", label: "4th Year" },
+  ];
+
   // State
   const [isWeekday, setIsWeekday] = useState<boolean>(true);
   const [days, setDays] = useState<string[]>(weekDays);
@@ -66,6 +77,7 @@ const TimeAllocationPortal = () => {
     text: string;
     type: "success" | "error";
   } | null>(null);
+  const [selectedYear, setSelectedYear] = useState<string>("1st Year");
 
   // Utility functions
   const timeToMinutes = (time: string): number => {
@@ -86,6 +98,8 @@ const TimeAllocationPortal = () => {
     end: string,
     duration: number
   ): string[] => {
+    if (timeToMinutes(end) <= timeToMinutes(start)) return []; // Prevent infinite loops
+
     const slots: string[] = [];
     let currentTime = timeToMinutes(start);
     const endTime = timeToMinutes(end);
@@ -107,6 +121,8 @@ const TimeAllocationPortal = () => {
       selectedTimeRange.end,
       duration
     );
+    // DEBUG: Log generated time slots
+    console.log("Generated Time Slots:", slots);
     setTimeSlots(slots);
   }, [selectedTimeRange.start, selectedTimeRange.end, duration]);
 
@@ -138,6 +154,66 @@ const TimeAllocationPortal = () => {
     }
   }, [days, timeSlots]);
 
+  // Load schedule for selected year
+  const loadScheduleForYear = async (year: string) => {
+    try {
+      const data = await API.getTimeAllocation(year);
+      // DEBUG: Log data received from backend
+      console.log("API Response Data:", data);
+
+      if (data) {
+        const loadedSchedule: Schedule = {};
+
+        if (data.weekdays) {
+          Object.entries(data.weekdays).forEach(([day, slots]) => {
+            loadedSchedule[day] = loadedSchedule[day] || {};
+            slots.availableSlots.forEach((slot) => {
+              loadedSchedule[day][slot] = true;
+            });
+            slots.unavailableSlots.forEach((slot) => {
+              loadedSchedule[day][slot] = false;
+            });
+          });
+        }
+
+        if (data.weekends) {
+          Object.entries(data.weekends).forEach(([day, slots]) => {
+            loadedSchedule[day] = loadedSchedule[day] || {};
+            slots.availableSlots.forEach((slot) => {
+              loadedSchedule[day][slot] = true;
+            });
+            slots.unavailableSlots.forEach((slot) => {
+              loadedSchedule[day][slot] = false;
+            });
+          });
+        }
+
+        setSchedule(loadedSchedule);
+        // DEBUG: Log loaded schedule
+        console.log("Loaded Schedule:", loadedSchedule);
+
+        if (data.settings) {
+          setDuration(data.settings.slotDuration);
+          setSelectedTimeRange({
+            start: data.settings.weekdayStartTime,
+            end: data.settings.weekdayEndTime,
+            available: true,
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error loading schedule:", error);
+      setSaveMessage({
+        text: "Error loading schedule",
+        type: "error",
+      });
+    }
+  };
+
+  useEffect(() => {
+    loadScheduleForYear(selectedYear);
+  }, [selectedYear]);
+
   // Event handlers
   const handleWeekdayToggle = (isWeekdaySelected: boolean) => {
     setIsWeekday(isWeekdaySelected);
@@ -145,71 +221,72 @@ const TimeAllocationPortal = () => {
     setDays(newDays);
     setSelectedDay(newDays[0]);
 
-    const newSchedule: Schedule = {};
+    const newSchedule: Schedule = { ...schedule };
     newDays.forEach((day) => {
-      newSchedule[day] = {};
-      timeSlots.forEach((slot) => {
-        newSchedule[day][slot] = true;
-      });
+      if (!newSchedule[day]) {
+        newSchedule[day] = {};
+        timeSlots.forEach((slot) => {
+          newSchedule[day][slot] = true;
+        });
+      }
     });
     setSchedule(newSchedule);
+    // DEBUG: Log schedule after weekday toggle
+    console.log("Schedule after weekday toggle:", newSchedule);
   };
 
-  const handleSlotToggle = (day: string, slot: string) => {
-    setSchedule({
-      ...schedule,
+  const handleSlotToggle = useCallback((day: string, slot: string) => {
+    setSchedule((prevSchedule) => ({
+      ...prevSchedule,
       [day]: {
-        ...schedule[day],
-        [slot]: !schedule[day][slot],
+        ...prevSchedule[day],
+        [slot]: !prevSchedule[day][slot],
       },
-    });
-  };
+    }));
+  }, []);
 
   const handleApplyTimeRange = () => {
-    const updatedSchedule: Schedule = {
-      ...schedule,
-    };
-
+    const updatedSchedule: Schedule = { ...schedule };
     timeSlots.forEach((slot) => {
       updatedSchedule[selectedDay][slot] = selectedTimeRange.available;
     });
-
     setSchedule(updatedSchedule);
+    // DEBUG: Log schedule after applying time range
+    console.log("Schedule after applying time range:", updatedSchedule);
   };
 
   const handleClearAll = () => {
-    const clearedSchedule: Schedule = {
-      ...schedule,
-    };
+    const clearedSchedule: Schedule = { ...schedule };
     days.forEach((day: string) => {
       timeSlots.forEach((slot: string) => {
         clearedSchedule[day][slot] = false;
       });
     });
     setSchedule(clearedSchedule);
+    // DEBUG: Log cleared schedule
+    console.log("Cleared Schedule:", clearedSchedule);
   };
 
   const handleSetAllAvailable = () => {
-    const availableSchedule: Schedule = {
-      ...schedule,
-    };
+    const availableSchedule: Schedule = { ...schedule };
     days.forEach((day: string) => {
       timeSlots.forEach((slot: string) => {
         availableSchedule[day][slot] = true;
       });
     });
     setSchedule(availableSchedule);
+    // DEBUG: Log schedule after setting all available
+    console.log("All Available Schedule:", availableSchedule);
   };
 
-  // Save handler with proper message handling
-  // Modify the handleSaveSchedule function like this:
+  // Save handler
   const handleSaveSchedule = async () => {
     setIsSaving(true);
     setSaveMessage(null);
 
     try {
-      // Base payload with settings
-      const payload: any = {
+      const payload: TimeAllocationPayload = {
+        id: { year: selectedYear },
         settings: {
           slotDuration: duration,
           weekdayStartTime: selectedTimeRange.start,
@@ -217,83 +294,47 @@ const TimeAllocationPortal = () => {
           weekendStartTime: selectedTimeRange.start,
           weekendEndTime: selectedTimeRange.end,
         },
+        weekdays: isWeekday ? {} : undefined,
+        weekends: !isWeekday ? {} : undefined,
       };
 
-      if (isWeekday) {
-        // Only include weekdays data
-        payload.weekdays = {};
-        weekDays.forEach((day) => {
-          if (schedule[day]) {
-            payload.weekdays[day] = {
-              availableSlots: Object.entries(schedule[day])
-                .filter(([_, isAvailable]) => isAvailable)
-                .map(([slot]) => slot),
-              unavailableSlots: Object.entries(schedule[day])
-                .filter(([_, isAvailable]) => !isAvailable)
-                .map(([slot]) => slot),
-            };
-          } else {
-            payload.weekdays[day] = {
-              availableSlots: [],
-              unavailableSlots: [],
-            };
-          }
-        });
-        // Don't include weekends at all
-      } else {
-        // Only include weekends data
-        payload.weekends = {};
-        weekendDays.forEach((day) => {
-          if (schedule[day]) {
-            payload.weekends[day] = {
-              availableSlots: Object.entries(schedule[day])
-                .filter(([_, isAvailable]) => isAvailable)
-                .map(([slot]) => slot),
-              unavailableSlots: Object.entries(schedule[day])
-                .filter(([_, isAvailable]) => !isAvailable)
-                .map(([slot]) => slot),
-            };
-          } else {
-            payload.weekends[day] = {
-              availableSlots: [],
-              unavailableSlots: [],
-            };
-          }
-        });
-        // Don't include weekdays at all
-      }
-
-      console.log("Data to be sent to backend:", payload);
-
-      const response = await fetch("/api/save-schedule", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
+      const targetDays = isWeekday ? weekDays : weekendDays;
+      targetDays.forEach((day) => {
+        if (schedule[day]) {
+          const dayData = {
+            availableSlots: Object.entries(schedule[day])
+              .filter(([_, isAvailable]) => isAvailable)
+              .map(([slot]) => slot),
+            unavailableSlots: Object.entries(schedule[day])
+              .filter(([_, isAvailable]) => !isAvailable)
+              .map(([slot]) => slot),
+          };
+          if (isWeekday) payload.weekdays![day] = dayData;
+          else payload.weekends![day] = dayData;
+        }
       });
 
-      if (response.ok) {
-        setSaveMessage({
-          text: "Schedule saved successfully!",
-          type: "success",
-        });
-      } else {
-        setSaveMessage({
-          text: "Failed to save schedule",
-          type: "error",
-        });
-      }
+      // DEBUG: Log payload before sending to backend
+      console.log("Payload to be sent:", JSON.stringify(payload, null, 2));
+
+      await API.saveTimeAllocation(payload);
+      setSaveMessage({
+        text: `Schedule for ${selectedYear} saved successfully!`,
+        type: "success",
+      });
     } catch (error) {
       console.error("Error saving schedule:", error);
-      setSaveMessage({
-        text: "Error saving schedule",
-        type: "error",
-      });
+      setSaveMessage({ text: "Error saving schedule", type: "error" });
     } finally {
       setIsSaving(false);
     }
   };
+
+  // DEBUG: Log schedule state changes
+  useEffect(() => {
+    console.log("Schedule state updated:", schedule);
+  }, [schedule]);
+
   return (
     <div className="w-full">
       <div className="mb-8">
@@ -303,7 +344,6 @@ const TimeAllocationPortal = () => {
         </p>
       </div>
 
-      {/* Status message display */}
       {saveMessage && (
         <div
           className={`mb-4 p-4 rounded-md ${
@@ -320,7 +360,28 @@ const TimeAllocationPortal = () => {
         <h2 className="text-xl font-semibold text-gray-800 mb-4">
           Time Range Settings
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div>
+            <label
+              htmlFor="year"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Select Year
+            </label>
+            <select
+              id="year"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(e.target.value)}
+            >
+              {yearOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div className="mt-4">
             <label className="inline-flex items-center">
               <input
