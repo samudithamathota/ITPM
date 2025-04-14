@@ -12,7 +12,7 @@ export const SignupForm = ({ onSignupSuccess }: SignupFormProps) => {
     email: "",
     password: "",
     confirmPassword: "",
-    role: "student",
+    // role: "student",
   });
   const [errors, setErrors] = useState({
     fullName: "",
@@ -93,7 +93,7 @@ export const SignupForm = ({ onSignupSuccess }: SignupFormProps) => {
               fullName: formData.fullName,
               email: formData.email,
               password: formData.password,
-              role: formData.role,
+              // role: formData.role,
             }),
           }
         );
@@ -170,7 +170,7 @@ export const SignupForm = ({ onSignupSuccess }: SignupFormProps) => {
         )}
       </div>
 
-      <div>
+      {/* <div>
         <label
           htmlFor="role"
           className="block text-sm font-medium text-gray-700 mb-1"
@@ -190,7 +190,7 @@ export const SignupForm = ({ onSignupSuccess }: SignupFormProps) => {
           <option value="parent">Parent</option>
           <option value="administrator">Administrator</option>
         </select>
-      </div>
+      </div> */}
 
       <div>
         <label

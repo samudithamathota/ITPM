@@ -1,5 +1,14 @@
 // src/services/api.ts
+interface User {
+  id: string;
+  fullName: string;
+  email: string;
+}
 
+interface AuthResponse {
+  token: string;
+  user: User;
+}
 interface Teacher {
   id: number;
   name: string;
@@ -71,6 +80,60 @@ interface TimeAllocationPayload {
 
 const API_BASE =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
+
+export const AuthAPI = {
+  async signUp(
+    fullName: string,
+    email: string,
+    password: string
+  ): Promise<AuthResponse> {
+    const response = await fetch(`${API_BASE}/register`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ fullName, email, password }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Registration failed");
+    }
+
+    return await response.json();
+  },
+
+  async login(email: string, password: string): Promise<AuthResponse> {
+    const response = await fetch(`${API_BASE}/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Login failed");
+    }
+
+    return await response.json();
+  },
+
+  async getCurrentUser(token: string): Promise<User> {
+    const response = await fetch(`${API_BASE}/me`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch user data");
+    }
+
+    return await response.json();
+  },
+};
 
 export const API = {
   // Teacher endpoints

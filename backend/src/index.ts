@@ -7,11 +7,11 @@ import cors from "cors";
 dotenv.config();
 
 const app = express();
-const PORT: number = parseInt(process.env.PORT as string, 10) || 5000;
+const PORT: number = parseInt(process.env.PORT as string, 10) || 8070;
 
 // Ensure MONGODB_URI exists before using it
-const MONGO_URI = process.env.MONGODB_URI as string;
-if (!MONGO_URI) {
+const MONGO_URL = process.env.MONGODB_URL as string;
+if (!MONGO_URL) {
   console.error("Error: MONGODB_URI is not defined in environment variables.");
   process.exit(1); // Exit process if no DB URI is provided
 }
@@ -26,8 +26,7 @@ import lectureRoutes from "./routes/lectures";
 import roomRoutes from "./routes/rooms";
 import studentRoutes from "./routes/student";
 import timeAllocationRoutes from "./routes/timeAllocations";
-import login from "./routes/authentification";
-import register from "./routes/authentification";
+// import auth from "./routes/authentification";
 
 // Routes
 app.use("/api/teachers", teacherRoutes);
@@ -35,12 +34,11 @@ app.use("/api/lectures", lectureRoutes);
 app.use("/api/rooms", roomRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/time-allocations", timeAllocationRoutes);
-app.use("/api/login", login);
-app.use("/api/register", register);
+// app.use("/api/auth", auth);
 
 // Connect to MongoDB
 mongoose
-  .connect(MONGO_URI)
+  .connect(MONGO_URL)
   .then(() => console.log("✅ Connected to MongoDB"))
   .catch((err: unknown) => {
     console.error("❌ Could not connect to MongoDB:", err);

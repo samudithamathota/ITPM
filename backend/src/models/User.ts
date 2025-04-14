@@ -1,13 +1,13 @@
 import mongoose, { Document, Schema } from "mongoose";
 import bcrypt from "bcryptjs";
 
+export type UserRole = "student" | "teacher" | "parent" | "administrator";
+
 export interface IUser extends Document {
   fullName: string;
   email: string;
   password: string;
-  role: "student" | "teacher" | "parent" | "administrator";
   createdAt: Date;
-  updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
@@ -26,23 +26,18 @@ const UserSchema: Schema = new Schema(
       lowercase: true,
       match: [
         /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
-        "Please fill a valid email address",
+        "Please provide a valid email address",
       ],
     },
     password: {
       type: String,
       required: [true, "Password is required"],
       minlength: [8, "Password must be at least 8 characters"],
-      select: false,
-    },
-    role: {
-      type: String,
-      enum: ["student", "teacher", "parent", "administrator"],
-      default: "student",
+      select: false, // Excludes password by default in queries
     },
   },
   {
-    timestamps: true,
+    timestamps: true, // Automatically adds `createdAt` and `updatedAt`
   }
 );
 
@@ -54,16 +49,21 @@ UserSchema.pre<IUser>("save", async function (next) {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
     next();
-  } catch (error: any) {
-    next(error);
+  } catch (error) {
+    next(error as Error);
   }
 });
 
-// Method to compare passwords
+// Method to compare passwords (with error handling)
 UserSchema.methods.comparePassword = async function (
   candidatePassword: string
 ): Promise<boolean> {
-  return await bcrypt.compare(candidatePassword, this.password);
+  try {
+    return await bcrypt.compare(candidatePassword, this.password);
+  } catch (error) {
+    console.error("Password comparison error:", error);
+    return false;
+  }
 };
 
 export default mongoose.model<IUser>("User", UserSchema);
