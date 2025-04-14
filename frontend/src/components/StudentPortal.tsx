@@ -108,7 +108,9 @@ const StudentForm: React.FC<StudentFormProps> = ({
               Semester
             </label>
             <input
-              type="text"
+              type="number"
+              min={1}
+              max={2}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={student.semester}
               onChange={(e) =>
@@ -123,13 +125,14 @@ const StudentForm: React.FC<StudentFormProps> = ({
             </label>
             <input
               type="number"
+              min={1}
+              max={1000}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={student.count}
               onChange={(e) =>
-                setStudent({ ...student, count: parseInt(e.target.value) || 0 })
+                setStudent({ ...student, count: parseInt(e.target.value) || 1 })
               }
               required
-              min="0"
             />
           </div>
           <div>
@@ -190,7 +193,7 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
   const [newStudent, setNewStudent] = useState({
     batch: "",
     courses: [] as string[],
-    count: 0,
+    count: 1,
     year: "",
     semester: "",
     department: "",

@@ -36,13 +36,12 @@ interface Student {
 
 interface Room {
   id: number;
-  roomNumber: string; // e.g., "A101", "B205"
+  name: string;
   building: string;
+  department: string;
   capacity: number;
-  roomType: "lecture" | "lab" | "seminar" | "other";
-  equipment: string[]; // e.g., ["projector", "whiteboard", "computers"]
-  availability: string; // Could be a schedule or general availability
-  isAccessible: boolean;
+  availability: string;
+  type: number;
 }
 
 interface TimeAllocationPayload {

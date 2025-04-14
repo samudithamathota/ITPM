@@ -125,6 +125,7 @@ const RoomForm: React.FC<RoomFormProps> = ({
             <input
               type="number"
               id="capacity"
+              min={1}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={room.capacity}
               onChange={(e) =>
@@ -281,31 +282,8 @@ const RoomPortal: React.FC<RoomPortalProps> = ({
     const fetchRooms = async () => {
       try {
         setIsLoading(true);
-        // const data = await API.getRooms();
-        // setRooms(data);
-
-        // Mock data for demonstration
-        const mockRooms: Room[] = [
-          {
-            id: 1,
-            name: "CS101",
-            building: "CS Building",
-            department: "Computer Science",
-            capacity: 50,
-            availability: "Available",
-            type: 1,
-          },
-          {
-            id: 2,
-            name: "LAB202",
-            building: "Science Complex",
-            department: "Physics",
-            capacity: 30,
-            availability: "Available",
-            type: 2,
-          },
-        ];
-        setRooms(mockRooms);
+        const data = await API.getRooms();
+        setRooms(data);
       } catch (err) {
         setError("Failed to load rooms. Please try again later.");
       } finally {
@@ -335,12 +313,12 @@ const RoomPortal: React.FC<RoomPortalProps> = ({
       };
 
       if (editingRoom) {
-        // const updatedRoom = await API.updateRoom(roomData);
-        // setRooms(rooms.map(r => r.id === updatedRoom.id ? updatedRoom : r));
+        const updatedRoom = await API.updateRoom(roomData);
+        setRooms(rooms.map((r) => (r.id === updatedRoom.id ? updatedRoom : r)));
         setRooms(rooms.map((r) => (r.id === roomData.id ? roomData : r)));
       } else {
-        // const savedRoom = await API.addRoom(roomData);
-        // setRooms([...rooms, savedRoom]);
+        const savedRoom = await API.addRoom(roomData);
+        setRooms([...rooms, savedRoom]);
         setRooms([...rooms, roomData]);
       }
 
@@ -373,7 +351,7 @@ const RoomPortal: React.FC<RoomPortalProps> = ({
 
     try {
       setIsLoading(true);
-      // await API.deleteRoom(id);
+      await API.deleteRoom(id);
       setRooms(rooms.filter((room) => room.id !== id));
     } catch (err) {
       setError("Failed to delete room. Please try again.");

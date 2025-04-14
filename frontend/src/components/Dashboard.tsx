@@ -4,7 +4,9 @@ import {
   ClockIcon,
   FileTextIcon,
   CalendarIcon,
+  Building,
 } from "lucide-react";
+
 interface DashboardProps {
   setCurrentPage: (page: string) => void;
   setShowAddTeacherForm?: () => void;
@@ -26,7 +28,7 @@ const Dashboard = ({ setCurrentPage }: DashboardProps) => {
         break;
       case "generate-timetable":
         localStorage.setItem("startTimetableGeneration", "true");
-        setCurrentPage("timetable");
+        setCurrentPage("timetableGeneration");
         break;
     }
   };
@@ -38,35 +40,43 @@ const Dashboard = ({ setCurrentPage }: DashboardProps) => {
       page: "teachers",
     },
     {
-      name: "Lectures",
+      name: "Courses",
       count: 48,
       icon: <BookOpenIcon size={24} className="text-green-500" />,
       page: "lectures",
     },
     {
-      name: "Time Slots",
+      name: "Rooms",
+      count: 3,
+      icon: <Building size={24} className="text-orange-500" />,
+      page: "rooms",
+    },
+    {
+      name: "Time Allocation",
       count: 35,
       icon: <ClockIcon size={24} className="text-purple-500" />,
-      page: "time-allocation",
+      page: "timeAllocation",
     },
     {
       name: "Files",
       count: 3,
       icon: <FileTextIcon size={24} className="text-yellow-500" />,
-      page: "file-input",
+      page: "fileInput",
     },
     {
       name: "Timetables",
       count: 2,
       icon: <CalendarIcon size={24} className="text-red-500" />,
-      page: "timetable",
+      page: "timetableGeneration",
     },
   ];
   return (
     <div className="w-full">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
-        <p className="mt-2 text-gray-600">Welcome to FET Timetable Generator</p>
+        <p className="mt-2 text-gray-600">
+          Welcome to AcademiSync Timetable Generator
+        </p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         {stats.map((stat, index) => (

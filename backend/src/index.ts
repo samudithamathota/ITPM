@@ -26,6 +26,8 @@ import lectureRoutes from "./routes/lectures";
 import roomRoutes from "./routes/rooms";
 import studentRoutes from "./routes/student";
 import timeAllocationRoutes from "./routes/timeAllocations";
+import login from "./routes/authentification";
+import register from "./routes/authentification";
 
 // Routes
 app.use("/api/teachers", teacherRoutes);
@@ -33,6 +35,8 @@ app.use("/api/lectures", lectureRoutes);
 app.use("/api/rooms", roomRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/time-allocations", timeAllocationRoutes);
+app.use("/api/login", login);
+app.use("/api/register", register);
 
 // Connect to MongoDB
 mongoose

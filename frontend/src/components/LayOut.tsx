@@ -8,6 +8,7 @@ import {
   CalendarIcon,
   Building,
   Smile,
+  LogOut,
 } from "lucide-react";
 
 interface LayoutProps {
@@ -34,7 +35,7 @@ const Layout: React.FC<LayoutProps> = ({
     },
     {
       id: "lectures",
-      label: "Lectures",
+      label: "Courses",
       icon: <BookOpenIcon size={20} />,
     },
     {
@@ -61,6 +62,11 @@ const Layout: React.FC<LayoutProps> = ({
       id: "timetableGeneration",
       label: "Timetable Generation",
       icon: <CalendarIcon size={20} />,
+    },
+    {
+      id: "login",
+      label: <span className="text-red-500">Log Out</span>,
+      icon: <LogOut size={20} className="text-red-500" />,
     },
   ];
 

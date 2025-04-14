@@ -17,6 +17,7 @@ interface TimeRange {
 interface TimeAllocationPayload {
   id: {
     year: string;
+    semester: string;
   };
   weekdays?: {
     [day: string]: {
@@ -60,6 +61,11 @@ const TimeAllocationPortal = () => {
     { value: "4th Year", label: "4th Year" },
   ];
 
+  const semesterOptions = [
+    { value: 1, label: "Semester 1" },
+    { value: 2, label: "Semester 2" },
+  ];
+
   // State
   const [isWeekday, setIsWeekday] = useState<boolean>(true);
   const [days, setDays] = useState<string[]>(weekDays);
@@ -78,6 +84,8 @@ const TimeAllocationPortal = () => {
     type: "success" | "error";
   } | null>(null);
   const [selectedYear, setSelectedYear] = useState<string>("1st Year");
+  const [selectedSemester, setSelectedSemester] =
+    useState<string>("Semester 1");
 
   // Utility functions
   const timeToMinutes = (time: string): number => {
@@ -121,7 +129,6 @@ const TimeAllocationPortal = () => {
       selectedTimeRange.end,
       duration
     );
-    // DEBUG: Log generated time slots
     console.log("Generated Time Slots:", slots);
     setTimeSlots(slots);
   }, [selectedTimeRange.start, selectedTimeRange.end, duration]);
@@ -158,7 +165,6 @@ const TimeAllocationPortal = () => {
   const loadScheduleForYear = async (year: string) => {
     try {
       const data = await API.getTimeAllocation(year);
-      // DEBUG: Log data received from backend
       console.log("API Response Data:", data);
 
       if (data) {
@@ -189,7 +195,6 @@ const TimeAllocationPortal = () => {
         }
 
         setSchedule(loadedSchedule);
-        // DEBUG: Log loaded schedule
         console.log("Loaded Schedule:", loadedSchedule);
 
         if (data.settings) {
@@ -231,7 +236,6 @@ const TimeAllocationPortal = () => {
       }
     });
     setSchedule(newSchedule);
-    // DEBUG: Log schedule after weekday toggle
     console.log("Schedule after weekday toggle:", newSchedule);
   };
 
@@ -251,7 +255,6 @@ const TimeAllocationPortal = () => {
       updatedSchedule[selectedDay][slot] = selectedTimeRange.available;
     });
     setSchedule(updatedSchedule);
-    // DEBUG: Log schedule after applying time range
     console.log("Schedule after applying time range:", updatedSchedule);
   };
 
@@ -263,7 +266,6 @@ const TimeAllocationPortal = () => {
       });
     });
     setSchedule(clearedSchedule);
-    // DEBUG: Log cleared schedule
     console.log("Cleared Schedule:", clearedSchedule);
   };
 
@@ -275,7 +277,6 @@ const TimeAllocationPortal = () => {
       });
     });
     setSchedule(availableSchedule);
-    // DEBUG: Log schedule after setting all available
     console.log("All Available Schedule:", availableSchedule);
   };
 
@@ -286,7 +287,7 @@ const TimeAllocationPortal = () => {
 
     try {
       const payload: TimeAllocationPayload = {
-        id: { year: selectedYear },
+        id: { year: selectedYear, semester: selectedSemester },
         settings: {
           slotDuration: duration,
           weekdayStartTime: selectedTimeRange.start,
@@ -314,7 +315,6 @@ const TimeAllocationPortal = () => {
         }
       });
 
-      // DEBUG: Log payload before sending to backend
       console.log("Payload to be sent:", JSON.stringify(payload, null, 2));
 
       await API.saveTimeAllocation(payload);
@@ -330,7 +330,6 @@ const TimeAllocationPortal = () => {
     }
   };
 
-  // DEBUG: Log schedule state changes
   useEffect(() => {
     console.log("Schedule state updated:", schedule);
   }, [schedule]);
@@ -360,7 +359,7 @@ const TimeAllocationPortal = () => {
         <h2 className="text-xl font-semibold text-gray-800 mb-4">
           Time Range Settings
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div>
             <label
               htmlFor="year"
@@ -382,27 +381,25 @@ const TimeAllocationPortal = () => {
             </select>
           </div>
 
-          <div className="mt-4">
-            <label className="inline-flex items-center">
-              <input
-                type="radio"
-                className="form-radio text-purple-600"
-                name="week"
-                checked={isWeekday}
-                onChange={() => handleWeekdayToggle(true)}
-              />
-              <span className="ml-2 text-gray-700">WeekDay</span>
+          <div>
+            <label
+              htmlFor="semester"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Select Semester
             </label>
-            <label className="inline-flex items-center ml-6">
-              <input
-                type="radio"
-                className="form-radio text-purple-600"
-                name="week"
-                checked={!isWeekday}
-                onChange={() => handleWeekdayToggle(false)}
-              />
-              <span className="ml-2 text-gray-700">Weekend</span>
-            </label>
+            <select
+              id="semester"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              value={selectedSemester}
+              onChange={(e) => setSelectedSemester(e.target.value)}
+            >
+              {semesterOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>
@@ -425,6 +422,7 @@ const TimeAllocationPortal = () => {
               ))}
             </select>
           </div>
+
           <div>
             <label
               htmlFor="day"
@@ -445,6 +443,9 @@ const TimeAllocationPortal = () => {
               ))}
             </select>
           </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-4">
           <div>
             <label
               htmlFor="startTime"
@@ -486,6 +487,30 @@ const TimeAllocationPortal = () => {
             />
           </div>
         </div>
+
+        <div className="mt-4">
+          <label className="inline-flex items-center">
+            <input
+              type="radio"
+              className="form-radio text-purple-600"
+              name="week"
+              checked={isWeekday}
+              onChange={() => handleWeekdayToggle(true)}
+            />
+            <span className="ml-2 text-gray-700">WeekDay</span>
+          </label>
+          <label className="inline-flex items-center ml-6">
+            <input
+              type="radio"
+              className="form-radio text-purple-600"
+              name="week"
+              checked={!isWeekday}
+              onChange={() => handleWeekdayToggle(false)}
+            />
+            <span className="ml-2 text-gray-700">Weekend</span>
+          </label>
+        </div>
+
         <div className="mt-4">
           <label className="inline-flex items-center">
             <input

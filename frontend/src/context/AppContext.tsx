@@ -3,11 +3,23 @@ import { useState, createContext, useContext, ReactNode } from "react";
 type Teacher = { id: string; name: string };
 type Lecture = { id: string; name: string; teacherId?: string };
 type Room = { id: string; name: string };
+
+type DaySlots = {
+  availableSlots: string[];
+  unavailableSlots: string[];
+};
+
 type TimeAllocation = {
-  id: string;
-  day: string;
-  timeSlot: string;
-  lectureId: string;
+  id: { year: number };
+  weekdays?: Record<string, DaySlots>;
+  weekends?: Record<string, DaySlots>;
+  settings: {
+    slotDuration: number;
+    weekdayStartTime: string;
+    weekdayEndTime: string;
+    weekendStartTime: string;
+    weekendEndTime: string;
+  };
 };
 
 interface AppContextType {
@@ -29,7 +41,7 @@ interface AppContextType {
   timeAllocations: TimeAllocation[];
   addTimeAllocation: (allocation: Omit<TimeAllocation, "id">) => void;
   updateTimeAllocation: (allocation: TimeAllocation) => void;
-  deleteTimeAllocation: (id: string) => void;
+  deleteTimeAllocation: (year: number) => void;
 
   generatedTimetable: any;
   generateTimetable: () => any;
@@ -84,18 +96,23 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const addTimeAllocation = (allocation: Omit<TimeAllocation, "id">) => {
     setTimeAllocations([
       ...timeAllocations,
-      { ...allocation, id: Date.now().toString() },
+      {
+        ...allocation,
+        id: { year: new Date().getFullYear() }, // Assigning year dynamically
+      },
     ]);
   };
+
   const updateTimeAllocation = (updatedAllocation: TimeAllocation) => {
     setTimeAllocations(
       timeAllocations.map((a) =>
-        a.id === updatedAllocation.id ? updatedAllocation : a
+        a.id.year === updatedAllocation.id.year ? updatedAllocation : a
       )
     );
   };
-  const deleteTimeAllocation = (id: string) => {
-    setTimeAllocations(timeAllocations.filter((a) => a.id !== id));
+
+  const deleteTimeAllocation = (year: number) => {
+    setTimeAllocations(timeAllocations.filter((a) => a.id.year !== year));
   };
 
   // Generated timetable
@@ -117,7 +134,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           (l) =>
             !timeAllocations.some(
               (a) =>
-                a.day === day && a.timeSlot === timeSlot && a.lectureId === l.id
+                a.weekdays &&
+                a.weekdays[day] &&
+                a.weekdays[day].unavailableSlots.includes(timeSlot)
             )
         );
         const randomLecture =
