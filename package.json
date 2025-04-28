@@ -1,0 +1,25 @@
+{
+  "name": "pro",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "concurrently \"npm run dev --prefix frontend\" \"npm run dev --prefix backend\"",
+    "dev": "echo \"Running both frontend and backend concurrently...\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/samudithamathota/ITPM_test.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/samudithamathota/ITPM_test/issues"
+  },
+  "homepage": "https://github.com/samudithamathota/ITPM_test#readme",
+  "description": "",
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3"
+  }
+}

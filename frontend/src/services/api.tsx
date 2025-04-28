@@ -10,7 +10,7 @@ interface AuthResponse {
   user: User;
 }
 interface Teacher {
-  id: number;
+  id: string;
   name: string;
   department: string;
   courses: string[];
@@ -79,7 +79,7 @@ interface TimeAllocationPayload {
 }
 
 const API_BASE =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:8070/api";
 
 export const AuthAPI = {
   async signUp(
@@ -144,15 +144,20 @@ export const API = {
   },
 
   async addTeacher(teacherData: Omit<Teacher, "id">): Promise<Teacher> {
-    const response = await fetch(`${API_BASE}/teachers`, {
+    const response = await fetch(`${API_BASE}/teachers/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
+        Authorization: `Bearer ${localStorage.getItem("token")}`, // Remove this line if authentication is not required
       },
       body: JSON.stringify(teacherData),
     });
-    if (!response.ok) throw new Error("Failed to add teacher");
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to add teacher");
+    }
+
     return await response.json();
   },
 
@@ -169,7 +174,7 @@ export const API = {
     return await response.json();
   },
 
-  async deleteTeacher(id: number): Promise<void> {
+  async deleteTeacher(id: string): Promise<void> {
     const response = await fetch(`${API_BASE}/teachers/${id}`, {
       method: "DELETE",
       headers: {
@@ -181,7 +186,7 @@ export const API = {
 
   // Lecture endpoints
   async getLectures(): Promise<Lecture[]> {
-    const response = await fetch(`${API_BASE}/lectures`);
+    const response = await fetch(`${API_BASE}/lectures/`);
     if (!response.ok) throw new Error("Failed to fetch lectures");
     return await response.json();
   },

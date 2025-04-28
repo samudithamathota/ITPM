@@ -11,7 +11,7 @@ import {
 import { API } from "../services/api";
 
 interface Teacher {
-  id: number;
+  id: string; // Ensure id is always a string
   name: string;
   department: string;
   courses: string[];
@@ -186,21 +186,6 @@ const TeacherForm: React.FC<TeacherFormProps> = ({
               <option value="Physics Lab">Physics Lab</option>
             </select>
           </div>
-          {/* <div>
-            <label className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                checked={teacher.isAdmin}
-                onChange={(e) =>
-                  setTeacher({ ...teacher, isAdmin: e.target.checked })
-                }
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <span className="text-sm text-gray-700">
-                Senior Staff Member (Can modify timetable)
-              </span>
-            </label>
-          </div> */}
         </div>
         <div className="mt-6 flex justify-end">
           <button
@@ -230,7 +215,7 @@ const TeacherForm: React.FC<TeacherFormProps> = ({
 interface TeacherTableProps {
   teachers: Teacher[];
   onEdit: (teacher: Teacher) => void;
-  onDelete: (id: number) => void;
+  onDelete: (id: string) => void;
   isLoading: boolean;
 }
 
@@ -281,7 +266,7 @@ const TeacherTable: React.FC<TeacherTableProps> = ({
                 {teacher.department}
               </td>
               <td className="px-6 py-4 text-sm text-gray-500">
-                {teacher.courses.join(", ")}
+                {(teacher.courses || []).join(", ")}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                 {teacher.availability}
@@ -359,9 +344,8 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({
       try {
         setIsLoading(true);
         const data = await API.getTeachers();
+        console.log("Fetched teachers from backend:", data); // Add this line
         setTeachers(data);
-
-        // Mock data for demonstration
       } catch (err) {
         setError("Failed to load teachers. Please try again later.");
       } finally {
@@ -380,8 +364,8 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({
     try {
       setIsLoading(true);
 
-      const teacherData = {
-        id: editingTeacher?.id || Math.max(0, ...teachers.map((t) => t.id)) + 1,
+      const teacherData: Teacher = {
+        id: editingTeacher?.id || Date.now().toString(), // Generate a unique string ID
         name: newTeacher.name,
         department: newTeacher.department,
         courses: newTeacher.courses.split(",").map((c) => c.trim()),
@@ -393,19 +377,15 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({
 
       if (editingTeacher) {
         const updatedTeacher = await API.updateTeacher(teacherData);
+        console.log("Updated teacher response:", updatedTeacher); // Add this line
         setTeachers(
           teachers.map((t) => (t.id === updatedTeacher.id ? updatedTeacher : t))
         );
-
-        setTeachers(
-          teachers.map((t) => (t.id === teacherData.id ? teacherData : t))
-        );
       } else {
-        const { id: _, ...apiData } = teacherData;
-        const savedTeacher = await API.addTeacher(apiData);
+        const savedTeacher = await API.addTeacher(teacherData);
+        console.log("New teacher response:", savedTeacher); // Add this line
+        console.log("Saved Teacher:");
         setTeachers([...teachers, savedTeacher]);
-
-        setTeachers([...teachers, teacherData]);
       }
 
       resetForm();
@@ -434,15 +414,14 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({
     setShowAddForm(true);
   };
 
-  const handleDeleteTeacher = async (id: number) => {
+  const handleDeleteTeacher = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this teacher?"))
       return;
 
     try {
       setIsLoading(true);
+      console.log("Deleting teacher with ID:", id); // Add this line
       await API.deleteTeacher(id);
-      setTeachers(teachers.filter((teacher) => teacher.id !== id));
-
       setTeachers(teachers.filter((teacher) => teacher.id !== id));
     } catch (err) {
       setError("Failed to delete teacher. Please try again.");
