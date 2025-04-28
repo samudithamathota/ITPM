@@ -1,6 +1,6 @@
 import express, { Request, Response } from "express";
 import mongoose from "mongoose";
-import * as dotenv from "dotenv";
+import dotenv from "dotenv";
 import cors from "cors";
 
 // Load environment variables
@@ -26,7 +26,7 @@ import lectureRoutes from "./routes/lectures";
 import roomRoutes from "./routes/rooms";
 import studentRoutes from "./routes/student";
 import timeAllocationRoutes from "./routes/timeAllocations";
-// import auth from "./routes/authentification";
+import authRoutes from "./routes/authentification";
 
 // Routes
 app.use("/api/teachers", teacherRoutes);
@@ -34,7 +34,7 @@ app.use("/api/lectures", lectureRoutes);
 app.use("/api/rooms", roomRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/time-allocations", timeAllocationRoutes);
-// app.use("/api/auth", auth);
+app.use("/api/auth", authRoutes);
 
 // Connect to MongoDB
 mongoose

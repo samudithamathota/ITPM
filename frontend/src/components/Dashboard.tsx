@@ -6,6 +6,8 @@ import {
   CalendarIcon,
   Building,
 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { API } from "../services/api";
 
 interface DashboardProps {
   setCurrentPage: (page: string) => void;
@@ -13,6 +15,43 @@ interface DashboardProps {
   setShowAddLectureForm?: () => void;
 }
 const Dashboard = ({ setCurrentPage }: DashboardProps) => {
+  const [teacherCount, setTeacherCount] = useState<number>(0);
+  const [courseCount, setCourseCount] = useState<number>(0);
+  const [roomCount, setRoomCount] = useState<number>(0);
+
+  useEffect(() => {
+    const fetchTeachers = async () => {
+      try {
+        const teachers = await API.getStudents(); // teachers is an array
+        setTeacherCount(teachers.length); // just teachers.length
+      } catch (error) {
+        console.error("Failed to fetch teachers:", error);
+      }
+    };
+
+    const fetchCourse = async () => {
+      try {
+        const lectures = await API.getLectures();
+        setCourseCount(lectures.length);
+      } catch (error) {
+        console.error("Failed to fetch courses:", error);
+      }
+    };
+
+    const fetchRoom = async () => {
+      try {
+        const rooms = await API.getRooms();
+        setRoomCount(rooms.length);
+      } catch (error) {
+        console.error("Failed to fetch rooms:", error);
+      }
+    };
+
+    fetchTeachers();
+    fetchCourse();
+    fetchRoom();
+  }, []);
+
   const handleStatCardClick = (page: string) => {
     setCurrentPage(page);
   };
@@ -35,37 +74,34 @@ const Dashboard = ({ setCurrentPage }: DashboardProps) => {
   const stats = [
     {
       name: "Teachers",
-      count: 24,
+      count: teacherCount,
       icon: <UsersIcon size={24} className="text-blue-500" />,
       page: "teachers",
     },
     {
       name: "Courses",
-      count: 48,
+      count: courseCount,
       icon: <BookOpenIcon size={24} className="text-green-500" />,
       page: "lectures",
     },
     {
       name: "Rooms",
-      count: 3,
+      count: roomCount,
       icon: <Building size={24} className="text-orange-500" />,
       page: "rooms",
     },
     {
       name: "Time Allocation",
-      count: 35,
       icon: <ClockIcon size={24} className="text-purple-500" />,
       page: "timeAllocation",
     },
     {
       name: "Files",
-      count: 3,
       icon: <FileTextIcon size={24} className="text-yellow-500" />,
       page: "fileInput",
     },
     {
       name: "Timetables",
-      count: 2,
       icon: <CalendarIcon size={24} className="text-red-500" />,
       page: "timetableGeneration",
     },

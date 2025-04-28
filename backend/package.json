@@ -17,6 +17,7 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
+    "luxon": "^3.6.1",
     "mongoose": "^8.13.2"
   },
   "devDependencies": {
@@ -24,7 +25,7 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.1",
     "@types/jsonwebtoken": "^9.0.9",
-    "@types/mongoose": "^5.11.96",
+    "@types/luxon": "^3.6.2",
     "@types/node": "^22.13.14",
     "nodemon": "^3.1.9",
     "ts-node": "^10.9.2",
