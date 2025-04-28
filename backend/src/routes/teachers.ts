@@ -21,6 +21,27 @@ router.get("/", async (req: Request, res: Response) => {
   }
 });
 
+// Get a teacher by ID
+router.get("/:id", async (req: Request, res: any) => {
+  try {
+    const teacher = await Teacher.findById(req.params.id); // Pass the ID to findById
+    if (!teacher) {
+      return res.status(404).json({ message: "Teacher not found" }); // Handle case where teacher is not found
+    }
+    res.json(teacher);
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      res.status(500).json({
+        message: err.message,
+      });
+    } else {
+      res.status(500).json({
+        message: "Unknown error occurred",
+      });
+    }
+  }
+});
+
 // Create a teacher
 router.post("/", async (req: Request, res: Response) => {
   const teacher = new Teacher(req.body);

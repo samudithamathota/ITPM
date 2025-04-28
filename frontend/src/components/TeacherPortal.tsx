@@ -186,7 +186,7 @@ const TeacherForm: React.FC<TeacherFormProps> = ({
               <option value="Physics Lab">Physics Lab</option>
             </select>
           </div>
-          <div>
+          {/* <div>
             <label className="flex items-center space-x-2">
               <input
                 type="checkbox"
@@ -200,7 +200,7 @@ const TeacherForm: React.FC<TeacherFormProps> = ({
                 Senior Staff Member (Can modify timetable)
               </span>
             </label>
-          </div>
+          </div> */}
         </div>
         <div className="mt-6 flex justify-end">
           <button

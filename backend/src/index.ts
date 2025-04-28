@@ -27,6 +27,7 @@ import roomRoutes from "./routes/rooms";
 import studentRoutes from "./routes/student";
 import timeAllocationRoutes from "./routes/timeAllocations";
 import authRoutes from "./routes/authentification";
+import timeTable from "./routes/timeTable"; // Import timeTable route
 
 // Routes
 app.use("/api/teachers", teacherRoutes);
@@ -35,6 +36,7 @@ app.use("/api/rooms", roomRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/time-allocations", timeAllocationRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/timetables", timeTable); // Use timeTable route
 
 // Connect to MongoDB
 mongoose

@@ -21,6 +21,27 @@ router.get("/", async (req: Request, res: Response) => {
   }
 });
 
+// Get a single Room by ID
+router.get("/:id", async (req: Request, res: any) => {
+  try {
+    const room = await Room.findById(req.params.id); // Pass the ID to findById
+    if (!room) {
+      return res.status(404).json({ message: "Room not found" }); // Handle case where room is not found
+    }
+    res.json(room);
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      res.status(500).json({
+        message: err.message,
+      });
+    } else {
+      res.status(500).json({
+        message: "Unknown error occurred",
+      });
+    }
+  }
+});
+
 // Create a room
 router.post("/", async (req: Request, res: Response) => {
   const room = new Room(req.body);

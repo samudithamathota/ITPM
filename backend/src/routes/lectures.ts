@@ -22,6 +22,27 @@ router.get("/", async (req: Request, res: Response) => {
   }
 });
 
+// Get a single lecture by ID
+router.get("/:id", async (req: Request, res: any) => {
+  try {
+    const lecture = await Lecture.findById(req.params.id); // Pass the ID to findById
+    if (!lecture) {
+      return res.status(404).json({ message: "Lecture not found" }); // Handle case where lecture is not found
+    }
+    res.json(lecture);
+  } catch (err: unknown) {
+    // Cast error to 'Error'
+    if (err instanceof Error) {
+      res.status(500).json({
+        message: err.message,
+      });
+    } else {
+      res.status(500).json({
+        message: "An unknown error occurred",
+      });
+    }
+  }
+});
 // Create a Lecture
 router.post("/", async (req: Request, res: Response) => {
   const lecture = new Lecture(req.body);
