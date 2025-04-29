@@ -1,85 +1,77 @@
 import { Schema, model, Document } from "mongoose";
 
-interface TimeSlotSettings {
-  slotDuration: number;
-  weekdayStartTime: string;
-  weekdayEndTime: string;
-  weekendStartTime: string;
-  weekendEndTime: string;
-}
-
-interface DaySlots {
-  availableSlots: string[];
-  unavailableSlots: string[];
-}
-
-interface TimeAllocationId {
-  year: string;
-  semester: string;
-}
-
-interface TimeAllocationDocument extends Document {
-  id: TimeAllocationId;
+// Interface for TypeScript
+interface TimeAllocation extends Document {
+  id: {
+    year: string;
+    semester: string;
+  };
   weekdays?: {
-    [day: string]: DaySlots;
+    [day: string]: {
+      availableSlots: string[];
+      unavailableSlots: string[];
+    };
   };
   weekends?: {
-    [day: string]: DaySlots;
+    [day: string]: {
+      availableSlots: string[];
+      unavailableSlots: string[];
+    };
   };
-  settings: TimeSlotSettings;
+  settings: {
+    slotDuration: number;
+    weekdayStartTime: string;
+    weekdayEndTime: string;
+    weekendStartTime: string;
+    weekendEndTime: string;
+  };
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-const TimeAllocationIdSchema = new Schema<TimeAllocationId>(
+const TimeAllocationSchema = new Schema<TimeAllocation>(
   {
-    year: { type: String, required: true },
-    semester: { type: String, required: true },
+    id: {
+      year: { type: String, required: true },
+      semester: { type: String, required: true },
+    },
+    weekdays: {
+      type: Map,
+      of: new Schema({
+        availableSlots: [String],
+        unavailableSlots: [String],
+      }),
+      default: {},
+    },
+    weekends: {
+      type: Map,
+      of: new Schema({
+        availableSlots: [String],
+        unavailableSlots: [String],
+      }),
+      default: {},
+    },
+    settings: {
+      slotDuration: { type: Number, required: true },
+      weekdayStartTime: { type: String, required: true },
+      weekdayEndTime: { type: String, required: true },
+      weekendStartTime: { type: String, required: true },
+      weekendEndTime: { type: String, required: true },
+    },
   },
-  { _id: false }
+  {
+    timestamps: true, // Adds createdAt and updatedAt automatically
+    collection: "time_allocations",
+  }
 );
 
-const DaySlotsSchema = new Schema<DaySlots>(
-  {
-    availableSlots: { type: [String], default: [] },
-    unavailableSlots: { type: [String], default: [] },
-  },
-  { _id: false }
-);
-
-const TimeSlotSettingsSchema = new Schema<TimeSlotSettings>(
-  {
-    slotDuration: { type: Number, required: true },
-    weekdayStartTime: { type: String, required: true },
-    weekdayEndTime: { type: String, required: true },
-    weekendStartTime: { type: String, required: true },
-    weekendEndTime: { type: String, required: true },
-  },
-  { _id: false }
-);
-
-const TimeAllocationSchema = new Schema<TimeAllocationDocument>({
-  id: { type: TimeAllocationIdSchema, required: true, unique: true },
-  weekdays: {
-    type: Map,
-    of: DaySlotsSchema,
-    required: false,
-  },
-  weekends: {
-    type: Map,
-    of: DaySlotsSchema,
-    required: false,
-  },
-  settings: { type: TimeSlotSettingsSchema, required: true },
-});
-
-// Compound index for the composite ID
+// Compound unique index for year + semester combination
 TimeAllocationSchema.index(
   { "id.year": 1, "id.semester": 1 },
   { unique: true }
 );
 
-const TimeAllocationModel = model<TimeAllocationDocument>(
+export const TimeAllocationModel = model<TimeAllocation>(
   "TimeAllocation",
   TimeAllocationSchema
 );
-
-export default TimeAllocationModel;

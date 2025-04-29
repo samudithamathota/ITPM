@@ -22,7 +22,7 @@ const Dashboard = ({ setCurrentPage }: DashboardProps) => {
   useEffect(() => {
     const fetchTeachers = async () => {
       try {
-        const teachers = await API.getStudents(); // teachers is an array
+        const teachers = await API.getTeachers(); // teachers is an array
         setTeacherCount(teachers.length); // just teachers.length
       } catch (error) {
         console.error("Failed to fetch teachers:", error);

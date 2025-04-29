@@ -248,9 +248,9 @@ const TeacherTable: React.FC<TeacherTableProps> = ({
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Building
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Role
-            </th>
+            </th> */}
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Actions
             </th>
@@ -284,7 +284,7 @@ const TeacherTable: React.FC<TeacherTableProps> = ({
                   {teacher.building}
                 </div>
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm">
+              {/* <td className="px-6 py-4 whitespace-nowrap text-sm">
                 {teacher.isAdmin ? (
                   <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                     Senior Staff
@@ -294,7 +294,7 @@ const TeacherTable: React.FC<TeacherTableProps> = ({
                     Faculty
                   </span>
                 )}
-              </td>
+              </td> */}
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                 <button
                   className="text-blue-600 hover:text-blue-900 mr-3"
@@ -374,6 +374,8 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({
         building: newTeacher.building,
         isAdmin: newTeacher.isAdmin,
       };
+      console.log("Submitting teacher data:", teacherData);
+      console.log("Calculated teacher ID:", teacherData.id);
 
       if (editingTeacher) {
         const updatedTeacher = await API.updateTeacher(teacherData);

@@ -9,7 +9,7 @@ import {
 import { API } from "../services/api";
 
 interface Room {
-  id: number;
+  _id: string;
   name: string;
   building: string;
   department: string;
@@ -183,7 +183,7 @@ const RoomForm: React.FC<RoomFormProps> = ({
 interface RoomTableProps {
   rooms: Room[];
   onEdit: (room: Room) => void;
-  onDelete: (id: number) => void;
+  onDelete: (id: string) => void;
   isLoading: boolean;
 }
 
@@ -220,7 +220,7 @@ const RoomTable: React.FC<RoomTableProps> = ({
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
           {rooms.map((room) => (
-            <tr key={room.id}>
+            <tr key={room._id}>
               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                 {room.name}
               </td>
@@ -246,7 +246,7 @@ const RoomTable: React.FC<RoomTableProps> = ({
                 </button>
                 <button
                   className="text-red-600 hover:text-red-900"
-                  onClick={() => onDelete(room.id)}
+                  onClick={() => onDelete(room._id)}
                   disabled={isLoading}
                 >
                   <TrashIcon size={18} />
@@ -303,7 +303,6 @@ const RoomPortal: React.FC<RoomPortalProps> = ({
       setIsLoading(true);
 
       const roomData = {
-        id: editingRoom?.id || Math.max(0, ...rooms.map((r) => r.id)) + 1,
         name: newRoom.name,
         building: newRoom.building,
         department: newRoom.department,
@@ -311,15 +310,16 @@ const RoomPortal: React.FC<RoomPortalProps> = ({
         availability: "Available", // Default availability
         type: newRoom.type,
       };
-
+      console.log("Adding/updating room:", roomData); // Add this line
       if (editingRoom) {
-        const updatedRoom = await API.updateRoom(roomData);
-        setRooms(rooms.map((r) => (r.id === updatedRoom.id ? updatedRoom : r)));
-        setRooms(rooms.map((r) => (r.id === roomData.id ? roomData : r)));
+        const updatedRoomData = { ...roomData, _id: editingRoom._id };
+        const updatedRoom = await API.updateRoom(updatedRoomData);
+        setRooms(
+          rooms.map((r) => (r._id === updatedRoom._id ? updatedRoom : r))
+        );
       } else {
         const savedRoom = await API.addRoom(roomData);
         setRooms([...rooms, savedRoom]);
-        setRooms([...rooms, roomData]);
       }
 
       resetForm();
@@ -346,13 +346,14 @@ const RoomPortal: React.FC<RoomPortalProps> = ({
     setShowAddForm(true);
   };
 
-  const handleDeleteRoom = async (id: number) => {
+  const handleDeleteRoom = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this room?")) return;
 
     try {
       setIsLoading(true);
+      console.log("Deleting room with ID:", id); // Add this line
       await API.deleteRoom(id);
-      setRooms(rooms.filter((room) => room.id !== id));
+      setRooms(rooms.filter((room) => room._id !== id));
     } catch (err) {
       setError("Failed to delete room. Please try again.");
     } finally {

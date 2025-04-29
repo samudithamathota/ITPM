@@ -1,5 +1,5 @@
 import express, { Request, Response } from "express";
-import TimeAllocationModel from "../models/TimeAllocation";
+import { TimeAllocationModel } from "../models/TimeAllocation"; // Import the TimeAllocation model
 
 const router = express.Router();
 

@@ -251,9 +251,16 @@ const TimeAllocationPortal = () => {
 
   const handleApplyTimeRange = () => {
     const updatedSchedule: Schedule = { ...schedule };
+
+    // Ensure the selectedDay is initialized in the schedule
+    if (!updatedSchedule[selectedDay]) {
+      updatedSchedule[selectedDay] = {};
+    }
+
     timeSlots.forEach((slot) => {
       updatedSchedule[selectedDay][slot] = selectedTimeRange.available;
     });
+
     setSchedule(updatedSchedule);
     console.log("Schedule after applying time range:", updatedSchedule);
   };

@@ -34,7 +34,7 @@ interface Lecture {
 }
 
 interface Student {
-  id: number;
+  _id: string;
   batch: string;
   courses: string[];
   count: number;
@@ -44,7 +44,7 @@ interface Student {
 }
 
 interface Room {
-  id: number;
+  _id: string;
   name: string;
   building: string;
   department: string;
@@ -148,7 +148,7 @@ export const API = {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`, // Remove this line if authentication is not required
+        // Authorization: `Bearer ${localStorage.getItem("token")}`, // Remove this line if authentication is not required
       },
       body: JSON.stringify(teacherData),
     });
@@ -254,7 +254,7 @@ export const API = {
   },
 
   async updateStudent(student: Student): Promise<Student> {
-    const response = await fetch(`${API_BASE}/students/${student.id}`, {
+    const response = await fetch(`${API_BASE}/students/${student._id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -266,7 +266,7 @@ export const API = {
     return await response.json();
   },
 
-  async deleteStudent(id: number): Promise<void> {
+  async deleteStudent(id: string): Promise<void> {
     const response = await fetch(`${API_BASE}/students/${id}`, {
       method: "DELETE",
       headers: {
@@ -288,7 +288,7 @@ export const API = {
     return await response.json();
   },
 
-  async addRoom(roomData: Omit<Room, "id">): Promise<Room> {
+  async addRoom(roomData: Omit<Room, "_id">): Promise<Room> {
     const response = await fetch(`${API_BASE}/rooms`, {
       method: "POST",
       headers: {
@@ -302,11 +302,11 @@ export const API = {
   },
 
   async updateRoom(room: Room): Promise<Room> {
-    const response = await fetch(`${API_BASE}/rooms/${room.id}`, {
+    const response = await fetch(`${API_BASE}/rooms/${room._id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
+        // Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
       body: JSON.stringify(room),
     });
@@ -314,11 +314,11 @@ export const API = {
     return await response.json();
   },
 
-  async deleteRoom(id: number): Promise<void> {
+  async deleteRoom(id: string): Promise<void> {
     const response = await fetch(`${API_BASE}/rooms/${id}`, {
       method: "DELETE",
       headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
+        // Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
     });
     if (!response.ok) throw new Error("Failed to delete room");
@@ -327,7 +327,7 @@ export const API = {
   // Time Allocation
 
   async getTimeAllocation(year: string): Promise<TimeAllocationPayload> {
-    const response = await fetch(`${API_BASE}/time-allocation?year=${year}`, {
+    const response = await fetch(`${API_BASE}/time-allocations?year=${year}`, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
@@ -339,7 +339,7 @@ export const API = {
   async saveTimeAllocation(
     payload: TimeAllocationPayload
   ): Promise<TimeAllocationPayload> {
-    const response = await fetch(`${API_BASE}/time-allocation`, {
+    const response = await fetch(`${API_BASE}/time-allocations/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -352,16 +352,21 @@ export const API = {
   },
 
   async updateTimeAllocation(
+    year: string,
+    semester: string,
     payload: TimeAllocationPayload
   ): Promise<TimeAllocationPayload> {
-    const response = await fetch(`${API_BASE}/time-allocation`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-      body: JSON.stringify(payload),
-    });
+    const response = await fetch(
+      `${API_BASE}/time-allocations/year=${year}/semester=${semester}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(payload),
+      }
+    );
     if (!response.ok) throw new Error("Failed to update time allocation");
     return await response.json();
   },

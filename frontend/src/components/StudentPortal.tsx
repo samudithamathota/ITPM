@@ -9,7 +9,7 @@ import {
 import { API } from "../services/api";
 
 interface Student {
-  id: number;
+  _id: string;
   batch: string;
   courses: string[];
   count: number;
@@ -227,13 +227,18 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
       if (editingStudent) {
         const updatedStudent = await API.updateStudent({
           ...newStudent,
-          id: editingStudent.id,
+          _id: editingStudent._id,
         });
         setStudents(
-          students.map((s) => (s.id === editingStudent.id ? updatedStudent : s))
+          students.map((s) =>
+            s._id === editingStudent._id ? updatedStudent : s
+          )
         );
       } else {
-        const newStudentRecord = await API.addStudent(newStudent);
+        const newStudentRecord = await API.addStudent({
+          ...newStudent,
+          _id: "",
+        });
         setStudents([...students, newStudentRecord]);
       }
       resetForm();
@@ -262,14 +267,14 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
     setShowAddForm(true);
   };
 
-  const handleDeleteStudent = async (id: number) => {
+  const handleDeleteStudent = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this student?"))
       return;
 
     try {
       setIsLoading(true);
-      await API.deleteStudent(id);
-      setStudents(students.filter((student) => student.id !== id));
+      await API.deleteStudent(id.toString());
+      setStudents(students.filter((student) => student._id !== id.toString()));
     } catch (err) {
       setError("Failed to delete student. Please try again.");
       console.error("Error deleting student:", err);
@@ -405,7 +410,7 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredStudents.map((student) => (
-                  <tr key={student.id}>
+                  <tr key={student._id}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {student.batch}
                     </td>
@@ -434,7 +439,7 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
                       </button>
                       <button
                         className="text-red-600 hover:text-red-900"
-                        onClick={() => handleDeleteStudent(student.id)}
+                        onClick={() => handleDeleteStudent(student._id)}
                         disabled={isLoading}
                       >
                         <TrashIcon size={18} />
