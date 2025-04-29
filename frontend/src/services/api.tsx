@@ -54,8 +54,9 @@ interface Room {
 }
 
 interface TimeAllocationPayload {
-  id: {
+  allocationKey: {
     year: string;
+    semester: string;
   };
   weekdays?: {
     [day: string]: {
@@ -326,12 +327,18 @@ export const API = {
 
   // Time Allocation
 
-  async getTimeAllocation(year: string): Promise<TimeAllocationPayload> {
-    const response = await fetch(`${API_BASE}/time-allocations?year=${year}`, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-    });
+  async getTimeAllocation(
+    year: string,
+    semester: string
+  ): Promise<TimeAllocationPayload> {
+    const response = await fetch(
+      `${API_BASE}/time-allocations/${year}/${semester}`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
     if (!response.ok) throw new Error("Failed to fetch time allocation");
     return await response.json();
   },
@@ -357,7 +364,7 @@ export const API = {
     payload: TimeAllocationPayload
   ): Promise<TimeAllocationPayload> {
     const response = await fetch(
-      `${API_BASE}/time-allocations/year=${year}/semester=${semester}`,
+      `${API_BASE}/time-allocations/${year}/${semester}`,
       {
         method: "PUT",
         headers: {

@@ -15,7 +15,7 @@ interface TimeRange {
 }
 
 interface TimeAllocationPayload {
-  id: {
+  allocationKey: {
     year: string;
     semester: string;
   };
@@ -164,7 +164,7 @@ const TimeAllocationPortal = () => {
   // Load schedule for selected year
   const loadScheduleForYear = async (year: string) => {
     try {
-      const data = await API.getTimeAllocation(year);
+      const data = await API.getTimeAllocation(year, selectedSemester);
       console.log("API Response Data:", data);
 
       if (data) {
@@ -294,7 +294,7 @@ const TimeAllocationPortal = () => {
 
     try {
       const payload: TimeAllocationPayload = {
-        id: { year: selectedYear, semester: selectedSemester },
+        allocationKey: { year: selectedYear, semester: selectedSemester },
         settings: {
           slotDuration: duration,
           weekdayStartTime: selectedTimeRange.start,

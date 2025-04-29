@@ -2,7 +2,7 @@ import { Schema, model, Document } from "mongoose";
 
 // Interface for TypeScript
 interface TimeAllocation extends Document {
-  id: {
+  allocationKey: {
     year: string;
     semester: string;
   };
@@ -31,7 +31,7 @@ interface TimeAllocation extends Document {
 
 const TimeAllocationSchema = new Schema<TimeAllocation>(
   {
-    id: {
+    allocationKey: {
       year: { type: String, required: true },
       semester: { type: String, required: true },
     },
@@ -60,14 +60,14 @@ const TimeAllocationSchema = new Schema<TimeAllocation>(
     },
   },
   {
-    timestamps: true, // Adds createdAt and updatedAt automatically
+    timestamps: true,
     collection: "time_allocations",
   }
 );
 
-// Compound unique index for year + semester combination
+// Unique index for year + semester
 TimeAllocationSchema.index(
-  { "id.year": 1, "id.semester": 1 },
+  { "allocationKey.year": 1, "allocationKey.semester": 1 },
   { unique: true }
 );
 

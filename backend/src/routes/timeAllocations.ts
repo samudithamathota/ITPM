@@ -24,8 +24,8 @@ router.get(
     try {
       const { year, semester } = req.params; // Extract year and semester from the request parameters
       const timeAllocation = await TimeAllocationModel.findOne({
-        "id.year": year,
-        "id.semester": semester, // Include semester in the query
+        "allocationKey.year": year,
+        "allocationKey.semester": semester, // Include semester in the query
       });
 
       if (!timeAllocation) {
@@ -65,7 +65,7 @@ router.put(
     try {
       const { year, semester } = req.params; // Extract both year and semester
       const updatedTimeAllocation = await TimeAllocationModel.findOneAndUpdate(
-        { "id.year": year, "id.semester": semester }, // Include semester in the query
+        { "allocationKey.year": year, "allocationKey.semester": semester }, // Include semester in the query
         req.body,
         { new: true, runValidators: true } // Return the updated document and validate input
       );
@@ -90,8 +90,8 @@ router.delete(
     try {
       const { year, semester } = req.params; // Extract year and semester from the request parameters
       const deletedTimeAllocation = await TimeAllocationModel.findOneAndDelete({
-        "id.year": year,
-        "id.semester": semester, // Include semester in the query
+        "allocationKey.year": year,
+        "allocationKey.semester": semester, // Include semester in the query
       });
 
       if (!deletedTimeAllocation) {
