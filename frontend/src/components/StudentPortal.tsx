@@ -56,6 +56,15 @@ const StudentForm: React.FC<StudentFormProps> = ({
   isEditing,
   isLoading,
 }) => {
+  const [errors, setErrors] = useState<{
+    batch?: string;
+    department?: string;
+    year?: string;
+    semester?: string;
+    count?: string;
+    courses?: string;
+  }>({});
+
   return (
     <div className="bg-white p-6 rounded-lg shadow mb-8">
       <h2 className="text-xl font-semibold text-gray-800 mb-4">
@@ -71,11 +80,26 @@ const StudentForm: React.FC<StudentFormProps> = ({
               type="text"
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={student.batch}
-              onChange={(e) =>
-                setStudent({ ...student, batch: e.target.value })
-              }
+              placeholder="2023/2024"
+              onChange={(e) => {
+                const rawValue = e.target.value;
+                const sanitizedValue = rawValue
+                  .replace(/[^0-9/]/g, "")
+                  .replace(/\s+/g, " ")
+                  .toUpperCase();
+                setStudent({ ...student, batch: sanitizedValue });
+                setErrors((prev) => ({
+                  ...prev,
+                  batch: !/^[0-9/]+$/.test(rawValue)
+                    ? "Only numbers and / are allowed"
+                    : "",
+                }));
+              }}
               required
             />
+            {errors.batch && (
+              <p className="text-red-500 text-sm mt-1">{errors.batch}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -85,11 +109,26 @@ const StudentForm: React.FC<StudentFormProps> = ({
               type="text"
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={student.department}
-              onChange={(e) =>
-                setStudent({ ...student, department: e.target.value })
-              }
+              placeholder="Computer Science"
+              onChange={(e) => {
+                const rawValue = e.target.value;
+                const sanitizedValue = rawValue
+                  .replace(/[^A-Za-z ]/g, "")
+                  .replace(/\s+/g, " ")
+                  .toUpperCase();
+                setStudent({ ...student, department: sanitizedValue });
+                setErrors((prev) => ({
+                  ...prev,
+                  department: !/^[A-Za-z ]+$/.test(rawValue)
+                    ? "Only letters and spaces are allowed"
+                    : "",
+                }));
+              }}
               required
             />
+            {errors.department && (
+              <p className="text-red-500 text-sm mt-1">{errors.department}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -99,9 +138,26 @@ const StudentForm: React.FC<StudentFormProps> = ({
               type="text"
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={student.year}
-              onChange={(e) => setStudent({ ...student, year: e.target.value })}
+              placeholder="2023"
+              onChange={(e) => {
+                const rawValue = e.target.value;
+                const sanitizedValue = rawValue
+                  .replace(/[^0-9/]/g, "")
+                  .replace(/\s+/g, " ")
+                  .toUpperCase();
+                setStudent({ ...student, year: sanitizedValue });
+                setErrors((prev) => ({
+                  ...prev,
+                  year: !/^[0-9\s]+$/.test(rawValue)
+                    ? "Only numbers are allowed"
+                    : "",
+                }));
+              }}
               required
             />
+            {errors.year && (
+              <p className="text-red-500 text-sm mt-1">{errors.year}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -113,11 +169,26 @@ const StudentForm: React.FC<StudentFormProps> = ({
               max={2}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={student.semester}
-              onChange={(e) =>
-                setStudent({ ...student, semester: e.target.value })
-              }
+              placeholder="1 or 2"
+              onChange={(e) => {
+                const rawValue = e.target.value;
+                const sanitizedValue = rawValue
+                  .replace(/[^0-9/]/g, "")
+                  .replace(/\s+/g, " ")
+                  .toUpperCase();
+                setStudent({ ...student, semester: sanitizedValue });
+                setErrors((prev) => ({
+                  ...prev,
+                  semester: !/^[0-9]+$/.test(rawValue)
+                    ? "Only numbers are allowed"
+                    : "",
+                }));
+              }}
               required
             />
+            {errors.semester && (
+              <p className="text-red-500 text-sm mt-1">{errors.semester}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -129,11 +200,28 @@ const StudentForm: React.FC<StudentFormProps> = ({
               max={1000}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={student.count}
-              onChange={(e) =>
-                setStudent({ ...student, count: parseInt(e.target.value) || 1 })
-              }
+              placeholder="150"
+              onChange={(e) => {
+                const rawValue = e.target.value;
+                const sanitizedValue = rawValue
+                  .replace(/[^0-9/]/g, "")
+                  .replace(/\s+/g, " ");
+                setStudent({
+                  ...student,
+                  count: parseInt(sanitizedValue, 10) || 0,
+                });
+                setErrors((prev) => ({
+                  ...prev,
+                  count: !/^[0-9\s]+$/.test(rawValue)
+                    ? "Only numbers are allowed"
+                    : "",
+                }));
+              }}
               required
             />
+            {errors.count && (
+              <p className="text-red-500 text-sm mt-1">{errors.count}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -143,16 +231,33 @@ const StudentForm: React.FC<StudentFormProps> = ({
               type="text"
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={student.courses.join(", ")}
-              onChange={(e) =>
+              placeholder="Course1, Course2"
+              onChange={(e) => {
+                const rawValue = e.target.value;
+                const sanitizedValue = rawValue
+                  .replace(/[^A-Za-z, \s]/g, "") // Allow letters, numbers, commas, and spaces
+                  .replace(/\s+/g, " ")
+                  .toUpperCase();
                 setStudent({
                   ...student,
-                  courses: e.target.value
-                    .split(",")
-                    .map((course) => course.trim()),
-                })
-              }
+                  courses: sanitizedValue.split(","),
+                });
+
+                setErrors((prev) => ({
+                  ...prev,
+                  courses:
+                    sanitizedValue.length === 0
+                      ? "Courses cannot be empty"
+                      : !/^[A-Za-z, ]+$/.test(rawValue)
+                      ? "Only letters, commas, and spaces are allowed"
+                      : "",
+                }));
+              }}
               required
             />
+            {errors.courses && (
+              <p className="text-red-500 text-sm mt-1">{errors.courses}</p>
+            )}
           </div>
         </div>
         <div className="mt-6 flex justify-end">
@@ -190,7 +295,7 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [newStudent, setNewStudent] = useState({
+  const [newStudent, setNewStudent] = useState<Omit<Student, "_id">>({
     batch: "",
     courses: [] as string[],
     count: 1,
@@ -237,7 +342,6 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
       } else {
         const newStudentRecord = await API.addStudent({
           ...newStudent,
-          _id: "",
         });
         setStudents([...students, newStudentRecord]);
       }
@@ -287,7 +391,7 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
     setNewStudent({
       batch: "",
       courses: [] as string[],
-      count: 0,
+      count: 50,
       year: "",
       semester: "",
       department: "",

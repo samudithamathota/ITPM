@@ -54,12 +54,36 @@ const RoomForm: React.FC<RoomFormProps> = ({
   isEditing,
   isLoading,
 }) => {
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const newErrors: { [key: string]: string } = {};
+
+    if (!/^[A-Za-z0-9/\s]+$/.test(room.name)) {
+      newErrors.name = "Special charecters are not allowed";
+    }
+
+    if (!/^[A-Za-z]+$/.test(room.department)) {
+      newErrors.department = "Only letters are allowed";
+    }
+
+    if (room.capacity < 1) {
+      newErrors.capacity = "Capacity must be at least 1";
+    }
+
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length === 0) {
+      onSubmit(e);
+    }
+  };
+
   return (
     <div className="bg-white p-6 rounded-lg shadow mb-8">
       <h2 className="text-xl font-semibold text-gray-800 mb-4">
         {isEditing ? "Edit Room" : "Add New Room"}
       </h2>
-      <form onSubmit={onSubmit}>
+      <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label
@@ -73,10 +97,28 @@ const RoomForm: React.FC<RoomFormProps> = ({
               id="name"
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={room.name}
-              onChange={(e) => setRoom({ ...room, name: e.target.value })}
+              placeholder="CS101"
+              onChange={(e) => {
+                const rawValue = e.target.value;
+                const sanitizedValue = rawValue
+                  .replace(/[^A-Za-z0-9/\s]/g, "")
+                  .replace(/\s+/g, " ")
+                  .toUpperCase();
+                setRoom({ ...room, name: sanitizedValue });
+                setErrors((prev) => ({
+                  ...prev,
+                  name: !/^[A-Za-z0-9\s]+$/.test(rawValue)
+                    ? "Only letters numbers and spaces are allowed"
+                    : "",
+                }));
+              }}
               required
             />
+            {errors.name && (
+              <p className="text-red-500 text-sm mt-1">{errors.name}</p>
+            )}
           </div>
+
           <div>
             <label
               htmlFor="building"
@@ -88,7 +130,13 @@ const RoomForm: React.FC<RoomFormProps> = ({
               id="building"
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={room.building}
-              onChange={(e) => setRoom({ ...room, building: e.target.value })}
+              onChange={(e) => {
+                setRoom({ ...room, building: e.target.value });
+                setErrors((prev) => ({
+                  ...prev,
+                  building: !e.target.value ? "Building is required" : "",
+                }));
+              }}
               required
             >
               <option value="">Select Building</option>
@@ -98,7 +146,11 @@ const RoomForm: React.FC<RoomFormProps> = ({
               <option value="Math Department">Math Department</option>
               <option value="Physics Lab">Physics Lab</option>
             </select>
+            {errors.building && (
+              <p className="text-red-500 text-sm mt-1">{errors.building}</p>
+            )}
           </div>
+
           <div>
             <label
               htmlFor="department"
@@ -111,10 +163,28 @@ const RoomForm: React.FC<RoomFormProps> = ({
               id="department"
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={room.department}
-              onChange={(e) => setRoom({ ...room, department: e.target.value })}
+              placeholder="Computer Science"
+              onChange={(e) => {
+                const rawValue = e.target.value;
+                const sanitizedValue = rawValue
+                  .replace(/[^A-Za-z\s]/g, "")
+                  .replace(/\s+/g, " ")
+                  .toUpperCase();
+                setRoom({ ...room, department: sanitizedValue });
+                setErrors((prev) => ({
+                  ...prev,
+                  department: !/^[A-Za-z\s]+$/.test(rawValue)
+                    ? "Only letters and spaces are allowed"
+                    : "",
+                }));
+              }}
               required
             />
+            {errors.department && (
+              <p className="text-red-500 text-sm mt-1">{errors.department}</p>
+            )}
           </div>
+
           <div>
             <label
               htmlFor="capacity"
@@ -127,13 +197,22 @@ const RoomForm: React.FC<RoomFormProps> = ({
               id="capacity"
               min={1}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={room.capacity}
-              onChange={(e) =>
-                setRoom({ ...room, capacity: parseInt(e.target.value) })
-              }
+              value={room.capacity || ""}
+              onChange={(e) => {
+                const value = parseInt(e.target.value) || 0;
+                setRoom({ ...room, capacity: value });
+                setErrors((prev) => ({
+                  ...prev,
+                  capacity: value < 1 ? "Capacity must be at least 1" : "",
+                }));
+              }}
               required
             />
+            {errors.capacity && (
+              <p className="text-red-500 text-sm mt-1">{errors.capacity}</p>
+            )}
           </div>
+
           <div>
             <label
               htmlFor="type"
@@ -148,7 +227,6 @@ const RoomForm: React.FC<RoomFormProps> = ({
               onChange={(e) =>
                 setRoom({ ...room, type: parseInt(e.target.value) })
               }
-              required
             >
               <option value={1}>Lecture Hall</option>
               <option value={2}>Laboratory</option>
@@ -274,7 +352,7 @@ const RoomPortal: React.FC<RoomPortalProps> = ({
     name: "",
     building: "",
     department: "",
-    capacity: 0,
+    capacity: 1,
     type: 1,
   });
 
@@ -301,19 +379,16 @@ const RoomPortal: React.FC<RoomPortalProps> = ({
 
     try {
       setIsLoading(true);
-
       const roomData = {
-        name: newRoom.name,
-        building: newRoom.building,
-        department: newRoom.department,
-        capacity: newRoom.capacity,
-        availability: "Available", // Default availability
-        type: newRoom.type,
+        ...newRoom,
+        availability: editingRoom ? editingRoom.availability : "Available",
       };
-      console.log("Adding/updating room:", roomData); // Add this line
+
       if (editingRoom) {
-        const updatedRoomData = { ...roomData, _id: editingRoom._id };
-        const updatedRoom = await API.updateRoom(updatedRoomData);
+        const updatedRoom = await API.updateRoom({
+          ...roomData,
+          _id: editingRoom._id,
+        });
         setRooms(
           rooms.map((r) => (r._id === updatedRoom._id ? updatedRoom : r))
         );
@@ -351,7 +426,6 @@ const RoomPortal: React.FC<RoomPortalProps> = ({
 
     try {
       setIsLoading(true);
-      console.log("Deleting room with ID:", id); // Add this line
       await API.deleteRoom(id);
       setRooms(rooms.filter((room) => room._id !== id));
     } catch (err) {
@@ -366,7 +440,7 @@ const RoomPortal: React.FC<RoomPortalProps> = ({
       name: "",
       building: "",
       department: "",
-      capacity: 0,
+      capacity: 1,
       type: 1,
     });
     setEditingRoom(null);
@@ -390,14 +464,12 @@ const RoomPortal: React.FC<RoomPortalProps> = ({
 
   return (
     <div className="w-full">
-      {/* Error Message */}
       {error && (
         <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-md">
           {error}
         </div>
       )}
 
-      {/* Header and Add Button */}
       <div className="mb-8 flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-800">Room Management</h1>
@@ -418,7 +490,6 @@ const RoomPortal: React.FC<RoomPortalProps> = ({
         </button>
       </div>
 
-      {/* Room Form */}
       {showAddForm && (
         <RoomForm
           room={newRoom}
@@ -430,7 +501,6 @@ const RoomPortal: React.FC<RoomPortalProps> = ({
         />
       )}
 
-      {/* Room List */}
       <div className="bg-white p-6 rounded-lg shadow">
         <div className="mb-6 flex justify-between items-center">
           <h2 className="text-xl font-semibold text-gray-800">Room List</h2>

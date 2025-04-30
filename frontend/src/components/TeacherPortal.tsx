@@ -11,7 +11,7 @@ import {
 import { API } from "../services/api";
 
 interface Teacher {
-  id: string; // Ensure id is always a string
+  id: string;
   name: string;
   department: string;
   courses: string[];
@@ -51,15 +51,20 @@ interface TeacherFormProps {
   onCancel: () => void;
   isEditing: boolean;
   isLoading: boolean;
+  errors: Record<string, string>;
+  onInputChange: (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => void;
 }
 
 const TeacherForm: React.FC<TeacherFormProps> = ({
   teacher,
-  setTeacher,
   onSubmit,
   onCancel,
   isEditing,
   isLoading,
+  errors,
+  onInputChange,
 }) => {
   return (
     <div className="bg-white p-6 rounded-lg shadow mb-8">
@@ -80,9 +85,13 @@ const TeacherForm: React.FC<TeacherFormProps> = ({
               id="name"
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={teacher.name}
-              onChange={(e) => setTeacher({ ...teacher, name: e.target.value })}
+              placeholder="John Doe"
+              onChange={onInputChange}
               required
             />
+            {errors.name && (
+              <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+            )}
           </div>
           <div>
             <label
@@ -96,11 +105,13 @@ const TeacherForm: React.FC<TeacherFormProps> = ({
               id="department"
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={teacher.department}
-              onChange={(e) =>
-                setTeacher({ ...teacher, department: e.target.value })
-              }
+              placeholder="Computer Science"
+              onChange={onInputChange}
               required
             />
+            {errors.department && (
+              <p className="mt-1 text-sm text-red-600">{errors.department}</p>
+            )}
           </div>
           <div>
             <label
@@ -114,11 +125,13 @@ const TeacherForm: React.FC<TeacherFormProps> = ({
               id="courses"
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={teacher.courses}
-              onChange={(e) =>
-                setTeacher({ ...teacher, courses: e.target.value })
-              }
+              placeholder="Comoputer Science, Data Structures"
+              onChange={onInputChange}
               required
             />
+            {errors.courses && (
+              <p className="mt-1 text-sm text-red-600">{errors.courses}</p>
+            )}
           </div>
           <div>
             <label
@@ -131,14 +144,16 @@ const TeacherForm: React.FC<TeacherFormProps> = ({
               type="text"
               id="availability"
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="e.g., Mon-Wed-Fri"
+              placeholder="e.g., MON-WED-FRI or MON, WED, FRI"
               value={teacher.availability}
-              onChange={(e) =>
-                setTeacher({ ...teacher, availability: e.target.value })
-              }
+              onChange={onInputChange}
               required
             />
+            {errors.availability && (
+              <p className="mt-1 text-sm text-red-600">{errors.availability}</p>
+            )}
           </div>
+
           <div>
             <label
               htmlFor="seniority"
@@ -150,9 +165,7 @@ const TeacherForm: React.FC<TeacherFormProps> = ({
               id="seniority"
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={teacher.seniority}
-              onChange={(e) =>
-                setTeacher({ ...teacher, seniority: parseInt(e.target.value) })
-              }
+              onChange={onInputChange}
               required
             >
               <option value={1}>Junior Faculty</option>
@@ -161,6 +174,9 @@ const TeacherForm: React.FC<TeacherFormProps> = ({
               <option value={4}>Professor</option>
               <option value={5}>Senior Professor</option>
             </select>
+            {errors.seniority && (
+              <p className="mt-1 text-sm text-red-600">{errors.seniority}</p>
+            )}
           </div>
           <div>
             <label
@@ -173,9 +189,7 @@ const TeacherForm: React.FC<TeacherFormProps> = ({
               id="building"
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={teacher.building}
-              onChange={(e) =>
-                setTeacher({ ...teacher, building: e.target.value })
-              }
+              onChange={onInputChange}
               required
             >
               <option value="">Select Building</option>
@@ -185,6 +199,9 @@ const TeacherForm: React.FC<TeacherFormProps> = ({
               <option value="Math Department">Math Department</option>
               <option value="Physics Lab">Physics Lab</option>
             </select>
+            {errors.building && (
+              <p className="mt-1 text-sm text-red-600">{errors.building}</p>
+            )}
           </div>
         </div>
         <div className="mt-6 flex justify-end">
@@ -248,9 +265,6 @@ const TeacherTable: React.FC<TeacherTableProps> = ({
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Building
             </th>
-            {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Role
-            </th> */}
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Actions
             </th>
@@ -284,17 +298,6 @@ const TeacherTable: React.FC<TeacherTableProps> = ({
                   {teacher.building}
                 </div>
               </td>
-              {/* <td className="px-6 py-4 whitespace-nowrap text-sm">
-                {teacher.isAdmin ? (
-                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                    Senior Staff
-                  </span>
-                ) : (
-                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
-                    Faculty
-                  </span>
-                )}
-              </td> */}
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                 <button
                   className="text-blue-600 hover:text-blue-900 mr-3"
@@ -329,6 +332,7 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [newTeacher, setNewTeacher] = useState({
     name: "",
     department: "",
@@ -344,7 +348,6 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({
       try {
         setIsLoading(true);
         const data = await API.getTeachers();
-        console.log("Fetched teachers from backend:", data); // Add this line
         setTeachers(data);
       } catch (err) {
         setError("Failed to load teachers. Please try again later.");
@@ -357,15 +360,85 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({
     if (onMount) onMount();
   }, [onMount]);
 
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { id, value } = e.target;
+    const normalizedValue = value.replace(/\s+/g, " ");
+    let newErrors = { ...errors };
+
+    if (id === "name") {
+      const upperCaseValue = normalizedValue.toUpperCase();
+      if (/^[A-Z\s]*$/.test(upperCaseValue)) {
+        setNewTeacher((prev) => ({ ...prev, name: upperCaseValue }));
+        newErrors.name = "";
+      } else {
+        newErrors.name =
+          "Only letters and spaces are allowed for Teacher Name!";
+      }
+    } else if (id === "department") {
+      const upperCaseValue = normalizedValue.toUpperCase();
+      if (/^[A-Z\s]*$/.test(upperCaseValue)) {
+        setNewTeacher((prev) => ({ ...prev, department: upperCaseValue }));
+        newErrors.department = "";
+      } else {
+        newErrors.department =
+          "Only letters and spaces are allowed for Department!";
+      }
+    } else if (id === "courses") {
+      const upperCaseValue = normalizedValue.toUpperCase();
+      // Allow commas and letters
+      if (/^[A-Z\s,]*$/.test(upperCaseValue)) {
+        setNewTeacher((prev) => ({ ...prev, courses: upperCaseValue }));
+        newErrors.courses = "";
+      } else {
+        newErrors.courses = "Courses must be letters and commas only!";
+      }
+    } else if (id === "availability") {
+      const upperCaseValue = normalizedValue.toUpperCase();
+      // Allow commas and letters
+      if (/^[A-Z\s,]*$/.test(upperCaseValue)) {
+        setNewTeacher((prev) => ({ ...prev, availability: upperCaseValue }));
+        newErrors.availability = "";
+      } else {
+        newErrors.availability =
+          "Availability must be letters and commas only!";
+      }
+    } else if (id === "seniority") {
+      setNewTeacher((prev) => ({
+        ...prev,
+        seniority: parseInt(value, 10),
+      }));
+      newErrors.seniority = "";
+    } else if (id === "building") {
+      setNewTeacher((prev) => ({ ...prev, building: value }));
+      newErrors.building = "";
+    }
+
+    setErrors(newErrors);
+  };
+
   const handleAddTeacher = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    // Check for any remaining errors
+    if (Object.values(errors).some((error) => error !== "")) {
+      setError("Please fix form errors before submitting");
+      return;
+    }
+
+    // Check required fields
+    if (!newTeacher.name || !newTeacher.department || !newTeacher.building) {
+      setError("Please fill all required fields");
+      return;
+    }
 
     try {
       setIsLoading(true);
 
       const teacherData: Teacher = {
-        id: editingTeacher?.id || Date.now().toString(), // Generate a unique string ID
+        id: editingTeacher?.id || Date.now().toString(),
         name: newTeacher.name,
         department: newTeacher.department,
         courses: newTeacher.courses.split(",").map((c) => c.trim()),
@@ -374,19 +447,14 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({
         building: newTeacher.building,
         isAdmin: newTeacher.isAdmin,
       };
-      console.log("Submitting teacher data:", teacherData);
-      console.log("Calculated teacher ID:", teacherData.id);
 
       if (editingTeacher) {
         const updatedTeacher = await API.updateTeacher(teacherData);
-        console.log("Updated teacher response:", updatedTeacher); // Add this line
         setTeachers(
           teachers.map((t) => (t.id === updatedTeacher.id ? updatedTeacher : t))
         );
       } else {
         const savedTeacher = await API.addTeacher(teacherData);
-        console.log("New teacher response:", savedTeacher); // Add this line
-        console.log("Saved Teacher:");
         setTeachers([...teachers, savedTeacher]);
       }
 
@@ -414,6 +482,7 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({
       isAdmin: teacher.isAdmin,
     });
     setShowAddForm(true);
+    setErrors({});
   };
 
   const handleDeleteTeacher = async (id: string) => {
@@ -422,7 +491,6 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({
 
     try {
       setIsLoading(true);
-      console.log("Deleting teacher with ID:", id); // Add this line
       await API.deleteTeacher(id);
       setTeachers(teachers.filter((teacher) => teacher.id !== id));
     } catch (err) {
@@ -444,6 +512,7 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({
     });
     setEditingTeacher(null);
     setShowAddForm(false);
+    setErrors({});
   };
 
   const filteredTeachers = teachers.filter(
@@ -462,14 +531,12 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({
 
   return (
     <div className="w-full">
-      {/* Error Message */}
       {error && (
         <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-md">
           {error}
         </div>
       )}
 
-      {/* Header and Add Button */}
       <div className="mb-8 flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-800">
@@ -492,7 +559,6 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({
         </button>
       </div>
 
-      {/* Teacher Form */}
       {showAddForm && (
         <TeacherForm
           teacher={newTeacher}
@@ -501,10 +567,11 @@ const TeacherPortal: React.FC<TeacherPortalProps> = ({
           onCancel={resetForm}
           isEditing={!!editingTeacher}
           isLoading={isLoading}
+          errors={errors}
+          onInputChange={handleInputChange}
         />
       )}
 
-      {/* Teacher List */}
       <div className="bg-white p-6 rounded-lg shadow">
         <div className="mb-6 flex justify-between items-center">
           <h2 className="text-xl font-semibold text-gray-800">Teacher List</h2>

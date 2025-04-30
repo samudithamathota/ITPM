@@ -18,6 +18,7 @@ interface TimeAllocationPayload {
   allocationKey: {
     year: string;
     semester: string;
+    department: string;
   };
   weekdays?: {
     [day: string]: {
@@ -86,6 +87,7 @@ const TimeAllocationPortal = () => {
   const [selectedYear, setSelectedYear] = useState<string>("1st Year");
   const [selectedSemester, setSelectedSemester] =
     useState<string>("Semester 1");
+  const [selectedDepartment, setSelectedDepartment] = useState<string>("");
 
   // Utility functions
   const timeToMinutes = (time: string): number => {
@@ -106,7 +108,7 @@ const TimeAllocationPortal = () => {
     end: string,
     duration: number
   ): string[] => {
-    if (timeToMinutes(end) <= timeToMinutes(start)) return []; // Prevent infinite loops
+    if (timeToMinutes(end) <= timeToMinutes(start)) return [];
 
     const slots: string[] = [];
     let currentTime = timeToMinutes(start);
@@ -129,7 +131,6 @@ const TimeAllocationPortal = () => {
       selectedTimeRange.end,
       duration
     );
-    console.log("Generated Time Slots:", slots);
     setTimeSlots(slots);
   }, [selectedTimeRange.start, selectedTimeRange.end, duration]);
 
@@ -164,8 +165,11 @@ const TimeAllocationPortal = () => {
   // Load schedule for selected year
   const loadScheduleForYear = async (year: string) => {
     try {
-      const data = await API.getTimeAllocation(year, selectedSemester);
-      console.log("API Response Data:", data);
+      const data = await API.getTimeAllocation(
+        year,
+        selectedSemester,
+        selectedDepartment
+      );
 
       if (data) {
         const loadedSchedule: Schedule = {};
@@ -195,7 +199,6 @@ const TimeAllocationPortal = () => {
         }
 
         setSchedule(loadedSchedule);
-        console.log("Loaded Schedule:", loadedSchedule);
 
         if (data.settings) {
           setDuration(data.settings.slotDuration);
@@ -236,7 +239,6 @@ const TimeAllocationPortal = () => {
       }
     });
     setSchedule(newSchedule);
-    console.log("Schedule after weekday toggle:", newSchedule);
   };
 
   const handleSlotToggle = useCallback((day: string, slot: string) => {
@@ -252,7 +254,6 @@ const TimeAllocationPortal = () => {
   const handleApplyTimeRange = () => {
     const updatedSchedule: Schedule = { ...schedule };
 
-    // Ensure the selectedDay is initialized in the schedule
     if (!updatedSchedule[selectedDay]) {
       updatedSchedule[selectedDay] = {};
     }
@@ -262,7 +263,6 @@ const TimeAllocationPortal = () => {
     });
 
     setSchedule(updatedSchedule);
-    console.log("Schedule after applying time range:", updatedSchedule);
   };
 
   const handleClearAll = () => {
@@ -273,7 +273,6 @@ const TimeAllocationPortal = () => {
       });
     });
     setSchedule(clearedSchedule);
-    console.log("Cleared Schedule:", clearedSchedule);
   };
 
   const handleSetAllAvailable = () => {
@@ -284,7 +283,6 @@ const TimeAllocationPortal = () => {
       });
     });
     setSchedule(availableSchedule);
-    console.log("All Available Schedule:", availableSchedule);
   };
 
   // Save handler
@@ -294,7 +292,11 @@ const TimeAllocationPortal = () => {
 
     try {
       const payload: TimeAllocationPayload = {
-        allocationKey: { year: selectedYear, semester: selectedSemester },
+        allocationKey: {
+          year: selectedYear,
+          semester: selectedSemester,
+          department: selectedDepartment,
+        },
         settings: {
           slotDuration: duration,
           weekdayStartTime: selectedTimeRange.start,
@@ -322,8 +324,6 @@ const TimeAllocationPortal = () => {
         }
       });
 
-      console.log("Payload to be sent:", JSON.stringify(payload, null, 2));
-
       await API.saveTimeAllocation(payload);
       setSaveMessage({
         text: `Schedule for ${selectedYear} saved successfully!`,
@@ -336,10 +336,6 @@ const TimeAllocationPortal = () => {
       setIsSaving(false);
     }
   };
-
-  useEffect(() => {
-    console.log("Schedule state updated:", schedule);
-  }, [schedule]);
 
   return (
     <div className="w-full">
@@ -407,6 +403,30 @@ const TimeAllocationPortal = () => {
                 </option>
               ))}
             </select>
+          </div>
+
+          <div>
+            <label
+              htmlFor="department"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Department
+            </label>
+            <input
+              type="text"
+              id="department"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              value={selectedDepartment}
+              placeholder="Computer Science"
+              onChange={(e) => {
+                const rawValue = e.target.value;
+                const sanitizedValue = rawValue
+                  .replace(/[^A-Za-z ]/g, "")
+                  .replace(/\s+/g, " ")
+                  .toUpperCase();
+                setSelectedDepartment(sanitizedValue);
+              }}
+            />
           </div>
 
           <div>
@@ -559,6 +579,7 @@ const TimeAllocationPortal = () => {
           </button>
         </div>
       </div>
+
       <div className="bg-white p-6 rounded-lg shadow">
         <div className="mb-6 flex justify-between items-center">
           <h2 className="text-xl font-semibold text-gray-800">

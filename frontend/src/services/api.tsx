@@ -27,7 +27,6 @@ interface Lecture {
   department: string;
   duration: number;
   weeklyFrequency: number;
-  location: string;
   building: string;
   requiresLab: boolean;
   transitionTime: number;
@@ -57,6 +56,7 @@ interface TimeAllocationPayload {
   allocationKey: {
     year: string;
     semester: string;
+    department: string;
   };
   weekdays?: {
     [day: string]: {
@@ -241,7 +241,7 @@ export const API = {
     return await response.json();
   },
 
-  async addStudent(studentData: Omit<Student, "id">): Promise<Student> {
+  async addStudent(studentData: Omit<Student, "_id">): Promise<Student> {
     const response = await fetch(`${API_BASE}/students`, {
       method: "POST",
       headers: {
@@ -329,10 +329,11 @@ export const API = {
 
   async getTimeAllocation(
     year: string,
-    semester: string
+    semester: string,
+    department: string
   ): Promise<TimeAllocationPayload> {
     const response = await fetch(
-      `${API_BASE}/time-allocations/${year}/${semester}`,
+      `${API_BASE}/time-allocations/${year}/${semester}/${department}`,
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -361,10 +362,11 @@ export const API = {
   async updateTimeAllocation(
     year: string,
     semester: string,
+    department: string,
     payload: TimeAllocationPayload
   ): Promise<TimeAllocationPayload> {
     const response = await fetch(
-      `${API_BASE}/time-allocations/${year}/${semester}`,
+      `${API_BASE}/time-allocations/${year}/${semester}/${department}`,
       {
         method: "PUT",
         headers: {

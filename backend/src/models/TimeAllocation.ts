@@ -5,6 +5,7 @@ interface TimeAllocation extends Document {
   allocationKey: {
     year: string;
     semester: string;
+    department: string;
   };
   weekdays?: {
     [day: string]: {
@@ -34,6 +35,7 @@ const TimeAllocationSchema = new Schema<TimeAllocation>(
     allocationKey: {
       year: { type: String, required: true },
       semester: { type: String, required: true },
+      department: { type: String, required: true },
     },
     weekdays: {
       type: Map,
@@ -67,7 +69,11 @@ const TimeAllocationSchema = new Schema<TimeAllocation>(
 
 // Unique index for year + semester
 TimeAllocationSchema.index(
-  { "allocationKey.year": 1, "allocationKey.semester": 1 },
+  {
+    "allocationKey.year": 1,
+    "allocationKey.semester": 1,
+    "allocationKey.department": 1,
+  },
   { unique: true }
 );
 

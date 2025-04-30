@@ -42,14 +42,6 @@ const lectureSchema = new mongoose.Schema(
       required: true,
       min: [1, "Minimum weekly frequency is 1"],
     },
-    location: {
-      type: String,
-      required: [true, "Location is required"],
-      validate: {
-        validator: (v: string) => /^[A-Za-z0-9\s]+$/.test(v),
-        message: "Only letters, numbers and spaces allowed for location",
-      },
-    },
     building: {
       type: String,
       required: true,

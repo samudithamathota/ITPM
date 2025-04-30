@@ -17,7 +17,6 @@ interface Lecture {
   department: string;
   duration: number;
   weeklyFrequency: number;
-  location: string;
   building: string;
   requiresLab: boolean;
   transitionTime: number;
@@ -26,6 +25,11 @@ interface Lecture {
 interface LecturePortalProps {
   autoOpenForm?: boolean;
   onMount?: () => void;
+}
+
+interface Room {
+  _id: string;
+  building: string;
 }
 
 const LecturePortal = ({
@@ -42,12 +46,12 @@ const LecturePortal = ({
     name: string;
     code: string;
     department: string;
-    location: string;
+    building: string;
   }>({
     name: "",
     code: "",
     department: "",
-    location: "",
+    building: "",
   });
   const [newLecture, setNewLecture] = useState({
     name: "",
@@ -55,11 +59,15 @@ const LecturePortal = ({
     department: "",
     duration: 180,
     weeklyFrequency: 1,
-    location: "",
     building: "",
     requiresLab: false,
     transitionTime: 15,
   });
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [codeSuggestions, setCodeSuggestions] = useState<string[]>([]);
+  const [departmentSuggestions, setDepartmentSuggestions] = useState<string[]>(
+    []
+  );
 
   useEffect(() => {
     const fetchLectures = async () => {
@@ -69,14 +77,23 @@ const LecturePortal = ({
         setLectures(data);
       } catch (err) {
         setError("Failed to load lectures. Please try again later.");
-        // Fallback to mock data if API fails (remove in production)
         setLectures([]);
       } finally {
         setIsLoading(false);
       }
     };
 
+    const fetchRooms = async () => {
+      try {
+        const data = await API.getRooms();
+        setRooms(data);
+      } catch (err) {
+        setError("Failed to load rooms. Please try again later.");
+      }
+    };
+
     fetchLectures();
+    fetchRooms();
     if (onMount) onMount();
   }, [onMount]);
 
@@ -109,14 +126,12 @@ const LecturePortal = ({
 
     try {
       setIsLoading(true);
-
       const lectureData = {
         name: newLecture.name,
         code: newLecture.code,
         department: newLecture.department,
         duration: newLecture.duration,
         weeklyFrequency: newLecture.weeklyFrequency,
-        location: newLecture.location,
         building: newLecture.building,
         requiresLab: newLecture.requiresLab,
         transitionTime: newLecture.transitionTime,
@@ -155,7 +170,6 @@ const LecturePortal = ({
       department: lecture.department,
       duration: lecture.duration,
       weeklyFrequency: lecture.weeklyFrequency,
-      location: lecture.location,
       building: lecture.building,
       requiresLab: lecture.requiresLab,
       transitionTime: lecture.transitionTime,
@@ -185,13 +199,66 @@ const LecturePortal = ({
       department: "",
       duration: 180,
       weeklyFrequency: 1,
-      location: "",
       building: "",
       requiresLab: false,
       transitionTime: 15,
     });
     setEditingLecture(null);
     setShowAddForm(false);
+    setCodeSuggestions([]);
+    setDepartmentSuggestions([]);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    const normalizedValue = value.replace(/\s+/g, " ");
+    let newErrors = { ...errors };
+
+    if (id === "name") {
+      const upperCaseValue = normalizedValue.toUpperCase();
+      if (/^[A-Z\s]*$/.test(upperCaseValue)) {
+        setNewLecture((prev) => ({ ...prev, name: upperCaseValue }));
+        newErrors.name = "";
+      } else {
+        newErrors.name = "Only letters and spaces are allowed for Course Name!";
+      }
+    } else if (id === "code") {
+      const codeValue = value.replace(/[^A-Za-z0-9]/g, "").toUpperCase(); // ✅ correct sanitization
+      setNewLecture((prev) => ({ ...prev, code: codeValue }));
+
+      const filteredSuggestions = lectures
+        .map((lecture) => lecture.code)
+        .filter((code) => code.includes(codeValue));
+      setCodeSuggestions(filteredSuggestions);
+
+      if (filteredSuggestions.includes(codeValue)) {
+        newErrors.code = "This course code already exists!";
+      } else if (!/^[A-Za-z0-9\s]*$/.test(value)) {
+        newErrors.code =
+          "Only letters and numbers are allowed for Course Code!";
+      }
+    } else if (id === "department") {
+      const departmentValue = value
+        .replace(/[^A-Za-z0-9\s]/g, "")
+        .toUpperCase();
+      setNewLecture((prev) => ({ ...prev, department: departmentValue }));
+
+      const filteredSuggestions = Array.from(
+        new Set(lectures.map((lecture) => lecture.department))
+      ).filter((department) =>
+        department.toUpperCase().includes(departmentValue)
+      );
+      setDepartmentSuggestions(filteredSuggestions);
+
+      if (/^[A-Za-z0-9\s]*$/.test(value)) {
+        newErrors.department = "";
+      } else {
+        newErrors.department =
+          "Only letters, numbers and spaces are allowed for Department!";
+      }
+    }
+
+    setErrors(newErrors);
   };
 
   const filteredLectures = lectures.filter(
@@ -209,56 +276,14 @@ const LecturePortal = ({
     );
   }
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target; // Get the id and value
-
-    const normalizedValue = value.replace(/\s+/g, " ");
-    let newErrors = { ...errors };
-
-    if (id === "name") {
-      if (/^[A-Za-z\s]*$/.test(normalizedValue)) {
-        setNewLecture({ ...newLecture, name: normalizedValue });
-        newErrors.name = "";
-      } else {
-        newErrors.name = "Only letters and spaces are allowed for Course Name!";
-      }
-    } else if (id === "code") {
-      if (/^[A-Za-z0-9]+$/.test(value)) {
-        setNewLecture({ ...newLecture, code: value });
-        setError("");
-      } else {
-        newErrors.code =
-          "Only letters and numbers are allowed for Course Code!";
-      }
-    } else if (id === "department") {
-      if (/^[A-Za-z\s]*$/.test(value)) {
-        setNewLecture({ ...newLecture, department: value });
-        setError("");
-      } else {
-        newErrors.department = "Only letters are allowed for Department!";
-      }
-    } else if (id === "location") {
-      if (/^[A-Za-z0-9]+$/.test(value)) {
-        setNewLecture({ ...newLecture, location: value });
-        setError("");
-      } else {
-        newErrors.location =
-          "Only letters and numbers are allowed for Location!";
-      }
-    }
-    setErrors(newErrors);
-  };
-
   return (
     <div className="w-full">
-      {/* Error Message */}
       {error && (
         <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-md">
           {error}
         </div>
       )}
 
-      {/* Header and Add Button */}
       <div className="mb-8 flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-800">
@@ -281,7 +306,6 @@ const LecturePortal = ({
         </button>
       </div>
 
-      {/* Lecture Form */}
       {showAddForm && (
         <div className="bg-white p-6 rounded-lg shadow mb-8">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">
@@ -301,10 +325,11 @@ const LecturePortal = ({
                   id="name"
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                   value={newLecture.name}
+                  placeholder="Computer Science"
                   onChange={handleInputChange}
                   required
                 />
-                {errors && (
+                {errors.name && (
                   <p className="text-red-500 text-sm mt-1">{errors.name}</p>
                 )}
               </div>
@@ -320,11 +345,31 @@ const LecturePortal = ({
                   id="code"
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                   value={newLecture.code}
+                  placeholder="CS101"
                   onChange={handleInputChange}
                   required
                 />
-                {errors && (
+                {errors.code && (
                   <p className="text-red-500 text-sm mt-1">{errors.code}</p>
+                )}
+                {codeSuggestions.length > 0 && (
+                  <ul className="border border-gray-300 rounded-md mt-1 bg-white shadow-md max-h-40 overflow-y-auto">
+                    {codeSuggestions.map((suggestion) => (
+                      <li
+                        key={suggestion}
+                        className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                        onClick={() => {
+                          setNewLecture((prev) => ({
+                            ...prev,
+                            code: suggestion,
+                          }));
+                          setCodeSuggestions([]);
+                        }}
+                      >
+                        {suggestion}
+                      </li>
+                    ))}
+                  </ul>
                 )}
               </div>
               <div>
@@ -339,13 +384,33 @@ const LecturePortal = ({
                   id="department"
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                   value={newLecture.department}
+                  placeholder="Computer Science"
                   onChange={handleInputChange}
                   required
                 />
-                {errors && (
+                {errors.department && (
                   <p className="text-red-500 text-sm mt-1">
                     {errors.department}
                   </p>
+                )}
+                {departmentSuggestions.length > 0 && (
+                  <ul className="border border-gray-300 rounded-md mt-1 bg-white shadow-md max-h-40 overflow-y-auto">
+                    {departmentSuggestions.map((suggestion) => (
+                      <li
+                        key={suggestion}
+                        className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                        onClick={() => {
+                          setNewLecture((prev) => ({
+                            ...prev,
+                            department: suggestion,
+                          }));
+                          setDepartmentSuggestions([]);
+                        }}
+                      >
+                        {suggestion}
+                      </li>
+                    ))}
+                  </ul>
                 )}
               </div>
               <div>
@@ -365,10 +430,10 @@ const LecturePortal = ({
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                     value={newLecture.duration}
                     onChange={(e) =>
-                      setNewLecture({
-                        ...newLecture,
+                      setNewLecture((prev) => ({
+                        ...prev,
                         duration: parseInt(e.target.value),
-                      })
+                      }))
                     }
                     required
                   />
@@ -390,38 +455,22 @@ const LecturePortal = ({
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                   value={newLecture.building}
                   onChange={(e) =>
-                    setNewLecture({ ...newLecture, building: e.target.value })
+                    setNewLecture((prev) => ({
+                      ...prev,
+                      building: e.target.value,
+                    }))
                   }
                   required
                 >
-                  <option value="">Select Building</option>
-                  <option value="CS Building">CS Building</option>
-                  <option value="Science Complex">Science Complex</option>
-                  <option value="Engineering Block">Engineering Block</option>
-                  <option value="Math Department">Math Department</option>
-                  <option value="Physics Lab">Physics Lab</option>
+                  <option value="">Select a Building</option>
+                  {rooms.map((room) => (
+                    <option key={room._id} value={room.building}>
+                      {room.building}
+                    </option>
+                  ))}
                 </select>
-              </div>
-              <div>
-                <label
-                  htmlFor="location"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Room/Location
-                </label>
-                <input
-                  type="text"
-                  id="location"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                  value={newLecture.location}
-                  onChange={handleInputChange}
-                  placeholder="e.g., Room 101"
-                  required
-                />
-                {errors && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.department}
-                  </p>
+                {errors.building && (
+                  <p className="text-red-500 text-sm mt-1">{errors.building}</p>
                 )}
               </div>
               <div>
@@ -439,10 +488,10 @@ const LecturePortal = ({
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                   value={newLecture.transitionTime}
                   onChange={(e) =>
-                    setNewLecture({
-                      ...newLecture,
+                    setNewLecture((prev) => ({
+                      ...prev,
                       transitionTime: parseInt(e.target.value),
-                    })
+                    }))
                   }
                   required
                 />
@@ -456,10 +505,10 @@ const LecturePortal = ({
                     type="checkbox"
                     checked={newLecture.requiresLab}
                     onChange={(e) =>
-                      setNewLecture({
-                        ...newLecture,
+                      setNewLecture((prev) => ({
+                        ...prev,
                         requiresLab: e.target.checked,
-                      })
+                      }))
                     }
                     className="rounded border-gray-300 text-green-600 focus:ring-green-500"
                   />
@@ -493,7 +542,6 @@ const LecturePortal = ({
         </div>
       )}
 
-      {/* Lecture List */}
       <div className="bg-white p-6 rounded-lg shadow">
         <div className="mb-6 flex justify-between items-center">
           <h2 className="text-xl font-semibold text-gray-800">Courses List</h2>
@@ -572,7 +620,7 @@ const LecturePortal = ({
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <div className="flex items-center">
                         <MapPinIcon size={16} className="mr-2" />
-                        {lecture.building} - {lecture.location}
+                        {lecture.building}
                         {lecture.requiresLab && (
                           <span className="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
                             Lab
