@@ -53,6 +53,7 @@ interface Room {
 }
 
 interface TimeAllocationPayload {
+  // _id: string;
   allocationKey: {
     year: string;
     semester: string;
@@ -327,20 +328,15 @@ export const API = {
 
   // Time Allocation
 
-  async getTimeAllocation(
-    year: string,
-    semester: string,
-    department: string
-  ): Promise<TimeAllocationPayload> {
-    const response = await fetch(
-      `${API_BASE}/time-allocations/${year}/${semester}/${department}`,
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      }
-    );
-    if (!response.ok) throw new Error("Failed to fetch time allocation");
+  async getTimeAllocation(): Promise<TimeAllocationPayload> {
+    const response = await fetch(`${API_BASE}/time-allocations/`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
+    if (!response.ok) {
+      throw new Error("Failed to fetch time allocation");
+    }
     return await response.json();
   },
 
@@ -379,4 +375,18 @@ export const API = {
     if (!response.ok) throw new Error("Failed to update time allocation");
     return await response.json();
   },
+
+  // async deleteTimeAllocationById(id: string): Promise<void> {
+  //   const response = await fetch(`${API_BASE}/time-allocations/${id}`, {
+  //     method: "DELETE",
+  //     headers: {
+  //       Authorization: `Bearer ${localStorage.getItem("token")}`,
+  //     },
+  //   });
+
+  //   if (!response.ok) {
+  //     const errorData = await response.json();
+  //     throw new Error(errorData.message || "Failed to delete time allocation");
+  //   }
+  // },
 };

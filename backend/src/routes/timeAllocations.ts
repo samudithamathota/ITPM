@@ -19,13 +19,17 @@ router.get("/", async (req: Request, res: Response) => {
 
 // Get a single time allocation by year and semester
 router.get(
-  "/:year/:semester",
-  async (req: Request<{ year: string; semester: string }>, res: any) => {
+  "/:year/:semester/:department",
+  async (
+    req: Request<{ year: string; semester: string; department: string }>,
+    res: any
+  ) => {
     try {
-      const { year, semester } = req.params; // Extract year and semester from the request parameters
+      const { year, semester, department } = req.params; // Extract year and semester from the request parameters
       const timeAllocation = await TimeAllocationModel.findOne({
         "allocationKey.year": year,
         "allocationKey.semester": semester, // Include semester in the query
+        "allocationKey.department": department, // Include department in the query,
       });
 
       if (!timeAllocation) {
@@ -60,12 +64,19 @@ router.post("/", async (req: Request, res: Response) => {
 
 // Update a time allocation by year and semester
 router.put(
-  "/:year/:semester",
-  async (req: Request<{ year: string; semester: string }>, res: any) => {
+  "/:year/:semester/:department",
+  async (
+    req: Request<{ year: string; semester: string; department: string }>,
+    res: any
+  ) => {
     try {
-      const { year, semester } = req.params; // Extract both year and semester
+      const { year, semester, department } = req.params; // Extract both year and semester
       const updatedTimeAllocation = await TimeAllocationModel.findOneAndUpdate(
-        { "allocationKey.year": year, "allocationKey.semester": semester }, // Include semester in the query
+        {
+          "allocationKey.year": year,
+          "allocationKey.semester": semester,
+          "allocationKey.department": department,
+        }, // Include semester in the query
         req.body,
         { new: true, runValidators: true } // Return the updated document and validate input
       );
@@ -84,29 +95,23 @@ router.put(
 );
 
 // Delete a time allocation by year and semester
-router.delete(
-  "/:year/:semester",
-  async (req: Request<{ year: string; semester: string }>, res: any) => {
-    try {
-      const { year, semester } = req.params; // Extract year and semester from the request parameters
-      const deletedTimeAllocation = await TimeAllocationModel.findOneAndDelete({
-        "allocationKey.year": year,
-        "allocationKey.semester": semester, // Include semester in the query
+router.delete("/:id", async (req: Request, res: Response) => {
+  try {
+    await TimeAllocationModel.findByIdAndDelete(req.params.id);
+    res.json({
+      message: "Allocation deleted",
+    });
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      res.status(500).json({
+        message: err.message,
       });
-
-      if (!deletedTimeAllocation) {
-        return res.status(404).json({ message: "Time allocation not found" }); // Handle case where no document is found
-      }
-
-      res.json({ message: "Time allocation deleted successfully" }); // Return success message
-    } catch (error) {
-      if (error instanceof Error) {
-        res.status(500).json({ error: error.message }); // Return error message
-      } else {
-        res.status(500).json({ error: "An unknown error occurred" }); // Handle unknown errors
-      }
+    } else {
+      res.status(500).json({
+        message: "Unknown error occurred",
+      });
     }
   }
-);
+});
 
 export default router;
