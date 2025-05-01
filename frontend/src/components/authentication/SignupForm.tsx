@@ -1,11 +1,16 @@
 import React, { useState } from "react";
 import { EyeIcon, EyeOffIcon, UserPlusIcon } from "lucide-react";
+import { AuthAPI } from "../../services/api";
 
 interface SignupFormProps {
   onSignupSuccess: () => void;
+  handleLoginNavigation: () => void;
 }
 
-export const SignupForm = ({ onSignupSuccess }: SignupFormProps) => {
+export const SignupForm = ({
+  onSignupSuccess,
+  handleLoginNavigation,
+}: SignupFormProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     fullName: "",
@@ -82,30 +87,18 @@ export const SignupForm = ({ onSignupSuccess }: SignupFormProps) => {
     if (validate()) {
       setIsLoading(true);
       try {
-        const response = await fetch(
-          "http://localhost:3000/authentification/register",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              fullName: formData.fullName,
-              email: formData.email,
-              password: formData.password,
-              // role: formData.role,
-            }),
-          }
+        const res = await AuthAPI.signUp(
+          formData.fullName,
+          formData.email,
+          formData.password
         );
 
-        const data = await response.json();
-        if (response.ok) {
-          localStorage.setItem("token", data.token);
-          onSignupSuccess();
+        if (res) {
+          handleLoginNavigation();
         } else {
           setErrors({
             ...errors,
-            email: data.message || "Registration failed",
+            email: "Registration failed. Please Try again.",
           });
         }
       } catch (error) {

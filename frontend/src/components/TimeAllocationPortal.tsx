@@ -596,7 +596,7 @@ const TimeAllocationPortal = () => {
                 {days.map((day) => (
                   <th
                     key={day}
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
                     {day}
                   </th>
@@ -612,7 +612,7 @@ const TimeAllocationPortal = () => {
                   {days.map((day) => (
                     <td
                       key={`${day}-${slot}`}
-                      className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
+                      className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 "
                     >
                       <div className="flex items-center justify-center">
                         <button

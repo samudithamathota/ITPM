@@ -9,6 +9,10 @@ interface AuthProps {
 export const Auth = ({ onLogin }: AuthProps) => {
   const [isLogin, setIsLogin] = useState(true);
 
+  const handleLoginNavigation = () => {
+    setIsLogin(true);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col items-center justify-center w-full p-4">
       <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden">
@@ -48,7 +52,10 @@ export const Auth = ({ onLogin }: AuthProps) => {
           {isLogin ? (
             <LoginForm onLoginSuccess={onLogin} />
           ) : (
-            <SignupForm onSignupSuccess={onLogin} />
+            <SignupForm
+              onSignupSuccess={onLogin}
+              handleLoginNavigation={handleLoginNavigation}
+            />
           )}
         </div>
       </div>
