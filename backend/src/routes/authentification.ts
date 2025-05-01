@@ -57,4 +57,53 @@ router.post("/register", async (req: Request, res: any) => {
   }
 });
 
+router.post("/login", async (req: Request, res: any) => {
+  try {
+    const { email, password } = req.body;
+
+    // Find user by email
+    const user = await User.findByEmail(email);
+    if (!user) {
+      return res.status(400).json({ message: "Invalid email or password" });
+    }
+
+    // Check password
+    const isMatch = await user.comparePassword(password);
+
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid email or password" });
+    }
+
+    // Create JWT token
+    const token = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_SECRET as string,
+      { expiresIn: "1d" }
+    );
+
+    // Return user data and token (exclude password)
+    res.status(200).json({
+      token,
+      user: {
+        id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        createdAt: user.createdAt,
+      },
+    });
+  } catch (error: any) {
+    console.error("Login error:", error);
+
+    // Handle validation errors
+    if (error.name === "ValidationError") {
+      const messages = Object.values(error.errors).map(
+        (val: any) => val.message
+      );
+      return res.status(400).json({ message: messages.join(", ") });
+    }
+
+    res.status(500).json({ message: "Server error during login" });
+  }
+});
+
 export default router;

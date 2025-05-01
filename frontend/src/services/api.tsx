@@ -1,11 +1,11 @@
 // src/services/api.ts
-interface User {
+export interface User {
   id: string;
   fullName: string;
   email: string;
 }
 
-interface AuthResponse {
+export interface AuthResponse {
   token: string;
   user: User;
 }
@@ -89,7 +89,7 @@ export const AuthAPI = {
     email: string,
     password: string
   ): Promise<AuthResponse> {
-    const response = await fetch(`${API_BASE}/register`, {
+    const response = await fetch(`${API_BASE}/auth/register`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -106,7 +106,7 @@ export const AuthAPI = {
   },
 
   async login(email: string, password: string): Promise<AuthResponse> {
-    const response = await fetch(`${API_BASE}/login`, {
+    const response = await fetch(`${API_BASE}/auth/login`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -119,7 +119,7 @@ export const AuthAPI = {
       throw new Error(errorData.message || "Login failed");
     }
 
-    return await response.json();
+    return (await response.json()) as AuthResponse;
   },
 
   async getCurrentUser(token: string): Promise<User> {

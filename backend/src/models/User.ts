@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema } from "mongoose";
+import mongoose, { Document, Schema, Model } from "mongoose";
 import bcrypt from "bcryptjs";
 
 export type UserRole = "student" | "teacher" | "parent" | "administrator";
@@ -9,6 +9,10 @@ export interface IUser extends Document {
   password: string;
   createdAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
+}
+
+export interface IUserModel extends Model<IUser> {
+  findByEmail(email: string): Promise<IUser | null>;
 }
 
 const UserSchema: Schema = new Schema(
@@ -66,4 +70,13 @@ UserSchema.methods.comparePassword = async function (
   }
 };
 
-export default mongoose.model<IUser>("User", UserSchema);
+UserSchema.statics.findByEmail = async function (email: string) {
+  try {
+    return await this.findOne({ email }).select("+password");
+  } catch (error) {
+    console.error("Error finding user by email:", error);
+    throw new Error("Database error");
+  }
+};
+
+export default mongoose.model<IUser, IUserModel>("User", UserSchema);

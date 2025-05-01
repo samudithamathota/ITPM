@@ -1,11 +1,14 @@
 import React, { useState } from "react";
 import { EyeIcon, EyeOffIcon, LogInIcon } from "lucide-react";
 
+import { useAuth } from "../../context/AuthContext";
+
 interface LoginFormProps {
   onLoginSuccess: () => void;
 }
 
 export const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
+  const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
@@ -59,40 +62,20 @@ export const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
     e.preventDefault();
     if (validate()) {
       setIsLoading(true);
-      try {
-        const response = await fetch(
-          "http://localhost:3000/authentification/login",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              email: formData.email,
-              password: formData.password,
-            }),
-          }
-        );
-
-        const data = await response.json();
-        if (response.ok) {
-          localStorage.setItem("token", data.token);
+      login(formData.email, formData.password)
+        .then(() => {
           onLoginSuccess();
-        } else {
+        })
+        .catch((error) => {
+          console.error("Login error:", error);
           setErrors({
             email: "",
-            password: data.message || "Invalid credentials",
+            password: "Invalid credentials",
           });
-        }
-      } catch (error) {
-        console.error("Login error:", error);
-        setErrors({
-          email: "",
-          password: "An error occurred during login",
+        })
+        .finally(() => {
+          setIsLoading(false);
         });
-      } finally {
-        setIsLoading(false);
-      }
     }
   };
 
