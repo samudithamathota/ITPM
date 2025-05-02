@@ -180,7 +180,7 @@ const Dashboard = ({ setCurrentPage }: DashboardProps) => {
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            {/* <tbody className="bg-white divide-y divide-gray-200">
               <tr>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                   Fall Semester 2023
@@ -217,7 +217,7 @@ const Dashboard = ({ setCurrentPage }: DashboardProps) => {
                   </button>
                 </td>
               </tr>
-            </tbody>
+            </tbody> */}
           </table>
         </div>
       </div>

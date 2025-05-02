@@ -299,19 +299,19 @@ const RoomTable: React.FC<RoomTableProps> = ({
         <tbody className="bg-white divide-y divide-gray-200">
           {rooms.map((room) => (
             <tr key={room._id}>
-              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+              <td className="px-9 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                 {room.name}
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
                 {room.building}
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              <td className="px-9 py-4 whitespace-nowrap text-sm text-gray-500">
                 {room.department}
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              <td className="px-12   py-4 whitespace-nowrap text-sm text-gray-500">
                 {room.capacity}
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
                 {room.type === 1 ? "Lecture Hall" : "Laboratory"}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

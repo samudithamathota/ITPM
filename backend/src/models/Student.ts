@@ -2,7 +2,6 @@ import mongoose, { Schema, Document } from "mongoose";
 
 // Define the interface for TypeScript type safety
 interface IStudent extends Document {
-  _id: string;
   batch: string;
   courses: string[];
   count: number;
@@ -13,10 +12,6 @@ interface IStudent extends Document {
 
 export const studentSchema = new Schema<IStudent>(
   {
-    _id: {
-      type: String,
-    },
-
     batch: {
       type: String,
       required: true,
