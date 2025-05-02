@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { PlusIcon, SaveIcon } from "lucide-react";
+import { PlusIcon, SaveIcon, TrashIcon } from "lucide-react";
 import { API } from "../services/api";
 
 interface Schedule {
@@ -15,6 +15,7 @@ interface TimeRange {
 }
 
 interface TimeAllocationPayload {
+  _id?: string;
   allocationKey: {
     year: string;
     semester: string;
@@ -68,27 +69,29 @@ const TimeAllocationPortal = () => {
   ];
 
   // State
-  const [isWeekday, setIsWeekday] = useState<boolean>(true);
-  const [days, setDays] = useState<string[]>(weekDays);
-  const [schedule, setSchedule] = useState<Schedule>({});
-  const [selectedDay, setSelectedDay] = useState<string>("Monday");
+
+  const [isWeekday, setIsWeekday] = useState<boolean>(true); // Default to weekdays
+  const [days, setDays] = useState<string[]>(weekDays); // toggle between weekdays and weekends
+  const [schedule, setSchedule] = useState<Schedule>({}); // Schedule state
+  const [selectedDay, setSelectedDay] = useState<string>("Monday"); // date state
   const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRange>({
+    // Time range state
     start: "08:00",
     end: "22:00",
     available: true,
   });
-  const [duration, setDuration] = useState<number>(60);
-  const [timeSlots, setTimeSlots] = useState<string[]>([]);
-  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [duration, setDuration] = useState<number>(60); // Duration state
+  const [timeSlots, setTimeSlots] = useState<string[]>([]); // Time slots state
+  const [isSaving, setIsSaving] = useState<boolean>(false); // Saving state
   const [saveMessage, setSaveMessage] = useState<{
+    // Save message state
     text: string;
     type: "success" | "error";
   } | null>(null);
-  const [selectedYear, setSelectedYear] = useState<string>("1st Year");
-  const [selectedSemester, setSelectedSemester] =
-    useState<string>("Semester 1");
-  const [selectedDepartment, setSelectedDepartment] =
-    useState<string>("Semester 1");
+  const [selectedYear, setSelectedYear] = useState<string>("1st Year"); // Year state
+  const [selectedSemester, setSelectedSemester] = useState<string>("1"); // Semester state
+  const [selectedDepartment, setSelectedDepartment] = useState<string>("IT"); // Department state
+  const [allocations, setAllocations] = useState<TimeAllocationPayload[]>([]); // Allocations state
 
   // Utility functions
   const timeToMinutes = (time: string): number => {
@@ -165,62 +168,6 @@ const TimeAllocationPortal = () => {
   }, [days, timeSlots]);
 
   // Load schedule for selected year
-  const loadScheduleForYear = async (year: string) => {
-    try {
-      const data = await API.getTimeAllocation();
-      console.log("API Response Data:", data);
-
-      if (data) {
-        const loadedSchedule: Schedule = {};
-
-        if (data.weekdays) {
-          Object.entries(data.weekdays).forEach(([day, slots]) => {
-            loadedSchedule[day] = loadedSchedule[day] || {};
-            slots.availableSlots.forEach((slot) => {
-              loadedSchedule[day][slot] = true;
-            });
-            slots.unavailableSlots.forEach((slot) => {
-              loadedSchedule[day][slot] = false;
-            });
-          });
-        }
-
-        if (data.weekends) {
-          Object.entries(data.weekends).forEach(([day, slots]) => {
-            loadedSchedule[day] = loadedSchedule[day] || {};
-            slots.availableSlots.forEach((slot) => {
-              loadedSchedule[day][slot] = true;
-            });
-            slots.unavailableSlots.forEach((slot) => {
-              loadedSchedule[day][slot] = false;
-            });
-          });
-        }
-
-        setSchedule(loadedSchedule);
-        console.log("Loaded Schedule:", loadedSchedule);
-
-        if (data.settings) {
-          setDuration(data.settings.slotDuration);
-          setSelectedTimeRange({
-            start: data.settings.weekdayStartTime,
-            end: data.settings.weekdayEndTime,
-            available: true,
-          });
-        }
-      }
-    } catch (error) {
-      console.error("Error loading schedule:", error);
-      setSaveMessage({
-        text: "Error loading schedule",
-        type: "error",
-      });
-    }
-  };
-
-  useEffect(() => {
-    loadScheduleForYear(selectedYear);
-  }, [selectedYear]);
 
   // Event handlers
   const handleWeekdayToggle = (isWeekdaySelected: boolean) => {
@@ -296,6 +243,23 @@ const TimeAllocationPortal = () => {
     setSaveMessage(null);
 
     try {
+      // Check for duplicate allocation
+      const isDuplicate = allocations.some(
+        (allocation) =>
+          allocation.allocationKey.year === selectedYear &&
+          allocation.allocationKey.semester === selectedSemester &&
+          allocation.allocationKey.department === selectedDepartment
+      );
+
+      if (isDuplicate) {
+        setSaveMessage({
+          text: `Schedule for ${selectedYear} semester ${selectedSemester}  ${selectedDepartment} department already exists. Please delete`,
+          type: "error",
+        });
+        setIsSaving(false);
+        return;
+      }
+
       const payload: TimeAllocationPayload = {
         allocationKey: {
           year: selectedYear,
@@ -336,6 +300,12 @@ const TimeAllocationPortal = () => {
         text: `Schedule for ${selectedYear} saved successfully!`,
         type: "success",
       });
+
+      // Reload allocations after saving
+      const data = await API.getTimeAllocation();
+      setAllocations(
+        Array.isArray(data) ? data : [data as TimeAllocationPayload]
+      );
     } catch (error) {
       console.error("Error saving schedule:", error);
       setSaveMessage({ text: "Error saving schedule", type: "error" });
@@ -345,8 +315,57 @@ const TimeAllocationPortal = () => {
   };
 
   useEffect(() => {
+    const fetchAllocations = async () => {
+      try {
+        const data = await API.getTimeAllocation();
+        setAllocations(
+          Array.isArray(data) ? data : [data as TimeAllocationPayload]
+        );
+      } catch (error) {
+        console.error("Error fetching allocations:", error);
+        // Optionally set error state here
+      }
+    };
+
+    fetchAllocations();
+  }, []); // Add dependencies if needed
+
+  useEffect(() => {
     console.log("Schedule state updated:", schedule);
   }, [schedule]);
+
+  const handleDeleteAllocation = async (id: string) => {
+    try {
+      await API.deleteTimeAllocationById(id);
+      setAllocations((prevAllocations) =>
+        prevAllocations.filter((allocation) => allocation._id !== id)
+      );
+      setSaveMessage({
+        text: "Schedule deleted successfully!",
+        type: "success",
+      });
+    } catch (error) {
+      console.error("Error deleting schedule:", error);
+      setSaveMessage({
+        text: "Error deleting schedule",
+        type: "error",
+      });
+    }
+  };
+
+  const [errors, setErrors] = useState<{ department?: string }>({});
+
+  const handleDepartmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value;
+    const value = rawValue.replace(/[^a-zA-Z ]/g, "").toUpperCase();
+    setSelectedDepartment(value);
+    setErrors((prev) => ({
+      ...prev,
+      department: !/^[A-Za-z ]+$/.test(rawValue)
+        ? "Only letters and spaces are allowed"
+        : "",
+    }));
+  };
 
   return (
     <div className="w-full">
@@ -373,132 +392,170 @@ const TimeAllocationPortal = () => {
         <h2 className="text-xl font-semibold text-gray-800 mb-4">
           Time Range Settings
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div>
-            <label
-              htmlFor="year"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Select Year
-            </label>
-            <select
-              id="year"
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(e.target.value)}
-            >
-              {yearOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+        <div className="space-y-6">
+          {/* First Row: Department, Year, Semester */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <label
+                htmlFor="department"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Department
+              </label>
+              <input
+                type="text"
+                id="department"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                value={selectedDepartment}
+                onChange={(e) => {
+                  const rawValue = e.target.value;
+                  const value = rawValue
+                    .replace(/[^a-zA-Z ]/g, "")
+                    .toUpperCase();
+                  setSelectedDepartment(value);
+                  setErrors((prev) => ({
+                    ...prev,
+                    department: !/^[A-Za-z ]+$/.test(rawValue)
+                      ? "Only letters and spaces are allowed"
+                      : "",
+                  }));
+                }}
+                placeholder="Enter Department"
+                required
+              />
+              {errors.department && (
+                <p className="text-red-500 text-sm mt-1">{errors.department}</p>
+              )}
+            </div>
+
+            <div>
+              <label
+                htmlFor="year"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Select Year
+              </label>
+              <select
+                id="year"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+              >
+                {yearOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label
+                htmlFor="semester"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Select Semester
+              </label>
+              <select
+                id="semester"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                value={selectedSemester}
+                onChange={(e) => setSelectedSemester(e.target.value)}
+              >
+                {semesterOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          <div>
-            <label
-              htmlFor="semester"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Select Semester
-            </label>
-            <select
-              id="semester"
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-              value={selectedSemester}
-              onChange={(e) => setSelectedSemester(e.target.value)}
-            >
-              {semesterOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Second Row: Duration, Day, Start Time, End Time */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 my-10">
+            <div>
+              <label
+                htmlFor="duration"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Time Slot Duration
+              </label>
+              <select
+                id="duration"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                value={duration}
+                onChange={(e) => setDuration(Number(e.target.value))}
+              >
+                {durationOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          <div>
-            <label
-              htmlFor="duration"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Time Slot Duration
-            </label>
-            <select
-              id="duration"
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-              value={duration}
-              onChange={(e) => setDuration(Number(e.target.value))}
-            >
-              {durationOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
+            <div>
+              <label
+                htmlFor="day"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Select Day
+              </label>
+              <select
+                id="day"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                value={selectedDay}
+                onChange={(e) => setSelectedDay(e.target.value)}
+              >
+                {days.map((day) => (
+                  <option key={day} value={day}>
+                    {day}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          <div>
-            <label
-              htmlFor="day"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Select Day
-            </label>
-            <select
-              id="day"
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-              value={selectedDay}
-              onChange={(e) => setSelectedDay(e.target.value)}
-            >
-              {days.map((day) => (
-                <option key={day} value={day}>
-                  {day}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+            <div>
+              <label
+                htmlFor="startTime"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Schedule Start Time
+              </label>
+              <input
+                type="time"
+                id="startTime"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                value={selectedTimeRange.start}
+                onChange={(e) =>
+                  setSelectedTimeRange({
+                    ...selectedTimeRange,
+                    start: e.target.value,
+                  })
+                }
+              />
+            </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-4">
-          <div>
-            <label
-              htmlFor="startTime"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Schedule Start Time
-            </label>
-            <input
-              type="time"
-              id="startTime"
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-              value={selectedTimeRange.start}
-              onChange={(e) =>
-                setSelectedTimeRange({
-                  ...selectedTimeRange,
-                  start: e.target.value,
-                })
-              }
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="endTime"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Schedule End Time
-            </label>
-            <input
-              type="time"
-              id="endTime"
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-              value={selectedTimeRange.end}
-              onChange={(e) =>
-                setSelectedTimeRange({
-                  ...selectedTimeRange,
-                  end: e.target.value,
-                })
-              }
-            />
+            <div>
+              <label
+                htmlFor="endTime"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Schedule End Time
+              </label>
+              <input
+                type="time"
+                id="endTime"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                value={selectedTimeRange.end}
+                onChange={(e) =>
+                  setSelectedTimeRange({
+                    ...selectedTimeRange,
+                    end: e.target.value,
+                  })
+                }
+              />
+            </div>
           </div>
         </div>
 
@@ -644,6 +701,78 @@ const TimeAllocationPortal = () => {
             <SaveIcon size={18} className="mr-2" />
             {isSaving ? "Saving..." : "Save Schedule"}
           </button>
+        </div>
+      </div>
+
+      {/* View Allocations Section */}
+      <div className="bg-white p-6 rounded-lg shadow">
+        <h2 className="text-xl font-semibold text-gray-800 mb-4">
+          Saved Allocations
+        </h2>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Year
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Semester
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Department
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Type
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Slot Duration
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Time Range
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Action
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {allocations.map((allocation, index) => (
+                <tr key={index}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {allocation.allocationKey.year}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {allocation.allocationKey.semester}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {allocation.allocationKey.department}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {allocation.weekdays ? "Weekday" : "Weekend"}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {allocation.settings.slotDuration} minutes
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {allocation.weekdays
+                      ? `${allocation.settings.weekdayStartTime} - ${allocation.settings.weekdayEndTime}`
+                      : `${allocation.settings.weekendStartTime} - ${allocation.settings.weekendEndTime}`}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <button
+                      className="text-red-600 hover:text-red-900"
+                      onClick={() =>
+                        allocation._id && handleDeleteAllocation(allocation._id)
+                      }
+                    >
+                      <TrashIcon size={18} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

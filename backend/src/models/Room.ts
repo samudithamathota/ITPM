@@ -9,7 +9,7 @@ export interface IRoom extends Document {
   type: number;
 }
 
-const RoomSchema: Schema = new Schema(
+export const RoomSchema: Schema = new Schema(
   {
     name: { type: String, required: true },
     building: { type: String, required: true },

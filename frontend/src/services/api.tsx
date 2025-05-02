@@ -376,17 +376,17 @@ export const API = {
     return await response.json();
   },
 
-  // async deleteTimeAllocationById(id: string): Promise<void> {
-  //   const response = await fetch(`${API_BASE}/time-allocations/${id}`, {
-  //     method: "DELETE",
-  //     headers: {
-  //       Authorization: `Bearer ${localStorage.getItem("token")}`,
-  //     },
-  //   });
+  async deleteTimeAllocationById(id: string): Promise<void> {
+    const response = await fetch(`${API_BASE}/time-allocations/${id}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
 
-  //   if (!response.ok) {
-  //     const errorData = await response.json();
-  //     throw new Error(errorData.message || "Failed to delete time allocation");
-  //   }
-  // },
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to delete time allocation");
+    }
+  },
 };

@@ -11,7 +11,7 @@ interface IStudent extends Document {
   department: string;
 }
 
-const studentSchema = new Schema<IStudent>(
+export const studentSchema = new Schema<IStudent>(
   {
     _id: {
       type: String,

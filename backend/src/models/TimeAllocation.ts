@@ -30,7 +30,7 @@ interface TimeAllocation extends Document {
   updatedAt: Date;
 }
 
-const TimeAllocationSchema = new Schema<TimeAllocation>(
+export const TimeAllocationSchema = new Schema<TimeAllocation>(
   {
     allocationKey: {
       year: { type: String, required: true },
